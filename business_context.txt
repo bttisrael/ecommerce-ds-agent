@@ -1,5 +1,5 @@
-Supply chain operations dataset from DataCo Global with 180k orders.
-Goal: predict Late_delivery_risk (1 = late, 0 = on time) to help
-operations managers proactively flag at-risk shipments and prioritize
-expedited handling. Key decisions: warehouse routing, carrier selection,
-customer communication.
+# business_context.txt
+echo "E-commerce platform with 285M user events. Goal: predict whether a user 
+will purchase a product based on their browsing behavior (view, cart, purchase). 
+Key business questions: which products to recommend, which users are likely to 
+convert, and which product categories drive the most revenue."

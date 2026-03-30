@@ -7,19 +7,11 @@
     "Dataset has 180,519 rows \u00d7 53 columns. Target auto-detected as 'late_delivery_risk'."
   ],
   "hypothesis_insights": [
-    "The business should either avoid offering 1-2 day shipping options or invest heavily in expedited logistics capabilities, as current operations cannot reliably meet tight delivery windows with over 95% of 1-day shipments arriving late.",
-    "The business should prioritize reducing shipping delays as even a 1-day delay is strongly associated with late delivery risk, suggesting tight scheduling or the need for buffer time in delivery promises.",
-    "The business should prioritize resource allocation and handling procedures for PAYMENT, DEBIT, and CASH transactions which have 15-18% higher late delivery rates compared to TRANSFER transactions, potentially indicating these types require more complex processing or face operational bottlenecks.",
-    "The business should prioritize improving logistics and inventory management for high-risk categories like Golf Bags & Carts, Lacrosse, and Pet Supplies to reduce late deliveries and improve customer satisfaction.",
-    "The business should investigate operational processes in Pet Shop and Book Shop departments to identify bottlenecks and implement best practices from better-performing departments like Footwear and Discs Shop to reduce overall late delivery risk.",
-    "The business should consider implementing priority fulfillment processes for higher-value orders while investigating whether resource constraints are causing lower-benefit orders to be deprioritized, leading to increased delivery delays."
+    "Orders that take longer than their scheduled shipping window are highly likely to be flagged as late delivery risks, so proactively monitoring and expediting orders approaching their shipping deadline could significantly reduce late deliveries.",
+    "The business should prioritize targeted logistics improvements and buffer inventory for high-risk categories like Golf Bags & Carts, Pet Supplies, and Cameras to reduce late deliveries and improve customer satisfaction in these segments."
   ],
   "true_hypotheses": [
-    "Orders with lower scheduled shipping days (days_for_shipment_scheduled) tend to have higher late_delivery_risk due to tighter delivery windows",
-    "Orders where actual shipping days exceed scheduled days tend to have higher late_delivery_risk",
-    "Orders of specific transaction types (type) tend to have higher late_delivery_risk due to different handling requirements",
-    "Orders in specific product categories (category_name) tend to have higher late_delivery_risk due to specialized handling or inventory issues",
-    "Orders from specific departments (department_name) tend to have higher late_delivery_risk due to operational efficiency differences",
-    "Orders with lower benefit per order (benefit_per_order) tend to have slightly higher late_delivery_risk due to lower prioritization in fulfillment"
+    "Orders where days_for_shipping_real exceeds days_for_shipment_scheduled tend to have higher late_delivery_risk, as actual shipping time surpassing the scheduled window is a direct indicator of lateness.",
+    "Orders placed in certain category_names (e.g., bulky or high-volume categories) tend to have higher late_delivery_risk, as category-specific logistics complexity and demand spikes can disrupt on-time delivery."
   ]
 }

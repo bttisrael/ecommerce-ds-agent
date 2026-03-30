@@ -1,575 +1,694 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Late Delivery Risk — Business Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0f1117;
-            color: #e2e8f0;
-            line-height: 1.6;
-            padding: 2rem 1rem;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header {
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 0.5rem;
-        }
-        .header p {
-            color: #94a3b8;
-            margin-bottom: 0.75rem;
-            font-size: 0.95rem;
-        }
-        .badge {
-            display: inline-block;
-            background: #1e2130;
-            color: #4f8ef7;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .kpi-card {
-            background: #1e2130;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .kpi-card h3 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.75rem;
-        }
-        .kpi-card .value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-        .section {
-            background: #1e2130;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .section h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 1.25rem;
-        }
-        .chart-container {
-            height: 280px;
-            position: relative;
-        }
-        .insights-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        .insight-card {
-            background: #262938;
-            border-radius: 8px;
-            padding: 1.25rem;
-            border-left: 4px solid;
-        }
-        .insight-card.accent { border-left-color: #4f8ef7; }
-        .insight-card.success { border-left-color: #22c55e; }
-        .insight-card.warning { border-left-color: #f59e0b; }
-        .insight-card.danger { border-left-color: #ef4444; }
-        .insight-card h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 0.5rem;
-        }
-        .insight-card p {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        .table-container {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table th {
-            background: #262938;
-            color: #ffffff;
-            font-weight: 600;
-            text-align: left;
-            padding: 0.75rem;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        table td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #2d3348;
-            font-size: 0.9rem;
-        }
-        table tr:nth-child(even) {
-            background: #1a1d2b;
-        }
-        table tr:hover {
-            background: #262938;
-        }
-        .verdict-badge {
-            display: inline-block;
-            padding: 0.25rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .verdict-badge.true {
-            background: rgba(34, 197, 94, 0.15);
-            color: #22c55e;
-        }
-        .verdict-badge.false {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-        .verdict-badge.inconclusive {
-            background: rgba(148, 163, 184, 0.15);
-            color: #94a3b8;
-        }
-        .footer {
-            text-align: center;
-            color: #64748b;
-            font-size: 0.85rem;
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid #2d3348;
-        }
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.5rem;
-            }
-            .kpi-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            .insights-grid {
-                grid-template-columns: 1fr;
-            }
-            table {
-                font-size: 0.8rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Late Delivery Risk — Business Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f1117;
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* HEADER */
+  .header {
+    margin-bottom: 2rem;
+  }
+  .header-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.02em;
+  }
+  .model-badge {
+    background: #1e2130;
+    border: 1px solid #2d3452;
+    color: #4f8ef7;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .model-badge::before {
+    content: '●';
+    color: #22c55e;
+    font-size: 0.65rem;
+  }
+  .header-subtitle {
+    color: #64748b;
+    font-size: 0.875rem;
+    max-width: 800px;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, #2d3452, transparent);
+    margin: 1.5rem 0;
+  }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .kpi-card {
+    background: #1e2130;
+    border: 1px solid #2d3452;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: #4f8ef7; }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+  .kpi-card:nth-child(1)::before { background: #4f8ef7; }
+  .kpi-card:nth-child(2)::before { background: #22c55e; }
+  .kpi-card:nth-child(3)::before { background: #f59e0b; }
+  .kpi-card:nth-child(4)::before { background: #818cf8; }
+  .kpi-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+  }
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .kpi-unit {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-left: 0.2rem;
+  }
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: #475569;
+    margin-top: 0.35rem;
+  }
+
+  /* CHARTS ROW */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .card {
+    background: #1e2130;
+    border: 1px solid #2d3452;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: #4f8ef7;
+    border-radius: 2px;
+  }
+
+  /* CHART CONTAINERS */
+  .chart-container {
+    height: 280px;
+    position: relative;
+  }
+  .chart-container-sm {
+    height: 260px;
+    position: relative;
+  }
+
+  /* DONUT LEGEND */
+  .donut-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* INSIGHTS GRID */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .insight-card {
+    background: #1e2130;
+    border: 1px solid #2d3452;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    border-left: 4px solid;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .insight-card:hover { transform: translateY(-2px); }
+  .insight-card:nth-child(1) { border-left-color: #4f8ef7; }
+  .insight-card:nth-child(2) { border-left-color: #22c55e; }
+  .insight-card:nth-child(3) { border-left-color: #f59e0b; }
+  .insight-card:nth-child(4) { border-left-color: #ef4444; }
+  .insight-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .insight-title {
+    font-size: 0.925rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.4rem;
+  }
+  .insight-body {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.65;
+  }
+
+  /* HYPOTHESIS TABLE */
+  .table-wrapper {
+    background: #1e2130;
+    border: 1px solid #2d3452;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .table-scroll {
+    max-height: 340px;
+    overflow-y: auto;
+    border-radius: 8px;
+  }
+  .table-scroll::-webkit-scrollbar { width: 6px; }
+  .table-scroll::-webkit-scrollbar-track { background: #0f1117; }
+  .table-scroll::-webkit-scrollbar-thumb { background: #2d3452; border-radius: 3px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    background: #161926;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  tbody tr {
+    border-bottom: 1px solid #1a1f35;
+    transition: background 0.15s;
+  }
+  tbody tr:nth-child(even) { background: #161926; }
+  tbody tr:hover { background: #232840; }
+  tbody td {
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    vertical-align: top;
+  }
+  tbody td:first-child {
+    color: #4f8ef7;
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .verdict-badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .verdict-true { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+  .verdict-false { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+  .verdict-inconclusive { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+
+  .hyp-text {
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .insight-text {
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  /* CATEGORY BREAKDOWN */
+  .cat-card {
+    background: #1e2130;
+    border: 1px solid #2d3452;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 1.5rem 0 0.5rem;
+    border-top: 1px solid #1e2130;
+    color: #475569;
+    font-size: 0.78rem;
+  }
+  .footer strong { color: #64748b; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4f8ef7;
+    margin-bottom: 0.75rem;
+    opacity: 0.8;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .insights-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .header h1 { font-size: 1.25rem; }
+    .kpi-value { font-size: 1.5rem; }
+    table { font-size: 0.75rem; }
+    thead th, tbody td { padding: 0.6rem 0.6rem; }
+  }
+  @media (max-width: 400px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 id="dashboardTitle"></h1>
-            <p id="dashboardSubtitle"></p>
-            <span class="badge" id="modelBadge"></span>
-        </div>
+<div class="container">
 
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <h3>Total Records</h3>
-                <div class="value" id="totalRecords"></div>
-            </div>
-            <div class="kpi-card">
-                <h3>Model Accuracy</h3>
-                <div class="value" id="modelAccuracy"></div>
-            </div>
-            <div class="kpi-card">
-                <h3>Avg Confidence</h3>
-                <div class="value" id="avgConfidence"></div>
-            </div>
-            <div class="kpi-card">
-                <h3>True Hypotheses</h3>
-                <div class="value" id="trueHypotheses"></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Prediction Distribution</h2>
-            <div class="chart-container">
-                <canvas id="predDistChart"></canvas>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Feature Importance</h2>
-            <div class="chart-container">
-                <canvas id="featImpChart"></canvas>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Business Insights</h2>
-            <div class="insights-grid" id="insightsGrid"></div>
-        </div>
-
-        <div class="section">
-            <h2>Hypothesis Validation</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Verdict</th>
-                            <th>Hypothesis</th>
-                            <th>Business Insight</th>
-                        </tr>
-                    </thead>
-                    <tbody id="hypothesesTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="section" id="catBreakdownSection" style="display:none;">
-            <h2 id="catBreakdownTitle">Category Breakdown</h2>
-            <div class="chart-container">
-                <canvas id="catBreakdownChart"></canvas>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Generated by Auto Data Scientist v7 · CrewAI + Claude 3.5 Sonnet</p>
-            <p id="timestamp"></p>
-        </div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h1 id="dash-title"></h1>
+      <div class="model-badge" id="model-badge"></div>
     </div>
+    <p class="header-subtitle" id="dash-subtitle"></p>
+  </div>
+  <div class="divider"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        const DATA = {
+  <!-- KPI CARDS -->
+  <div class="section-label">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Records</div>
+      <div class="kpi-value" id="kpi-records"></div>
+      <div class="kpi-sub">Orders analysed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Model Accuracy</div>
+      <div class="kpi-value" id="kpi-accuracy"></div>
+      <div class="kpi-sub" id="kpi-accuracy-sub"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Confidence</div>
+      <div class="kpi-value" id="kpi-confidence"></div>
+      <div class="kpi-sub">Prediction certainty</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">True Hypotheses</div>
+      <div class="kpi-value" id="kpi-hyp"></div>
+      <div class="kpi-sub">Validated business hypotheses</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="section-label">Prediction Analysis</div>
+  <div class="charts-row">
+    <!-- Doughnut -->
+    <div class="card">
+      <div class="card-title">Prediction Distribution</div>
+      <div class="chart-container">
+        <canvas id="doughnutChart"></canvas>
+      </div>
+      <div class="donut-legend" id="donut-legend"></div>
+    </div>
+    <!-- Feature Importance -->
+    <div class="card">
+      <div class="card-title">Feature Importance</div>
+      <div class="chart-container">
+        <canvas id="featureChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUSINESS INSIGHTS -->
+  <div class="section-label">Business Insights</div>
+  <div class="insights-grid" id="insights-grid"></div>
+
+  <!-- HYPOTHESIS TABLE -->
+  <div class="section-label">Hypothesis Validation</div>
+  <div class="table-wrapper">
+    <div class="card-title">All Hypotheses</div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Verdict</th>
+            <th>Hypothesis</th>
+            <th>Business Insight</th>
+          </tr>
+        </thead>
+        <tbody id="hyp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CATEGORY BREAKDOWN -->
+  <div id="cat-section" style="display:none;">
+    <div class="section-label">Category Analysis</div>
+    <div class="cat-card">
+      <div class="card-title" id="cat-title">Late Rate by Category</div>
+      <div style="height:260px; position:relative;">
+        <canvas id="catChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <strong>Generated by Auto Data Scientist v7 · CrewAI + Claude 4.6 Sonnet</strong><br>
+    <span id="gen-time"></span>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const DATA = {
   "title": "Late Delivery Risk \u2014 Business Dashboard",
-  "context": "Supply chain operations dataset from DataCo Global with 180k orders.\nGoal: predict Late_delivery_risk (1 = late, 0 = on time) to help\noperations managers proactively flag at-risk shipments and prioritize\nexpedited handling. Key decisions: warehouse routing, carrier selection,\ncustomer communication.",
+  "context": "# business_context.txt\necho \"E-commerce platform with 285M user events. Goal: predict whether a user \nwill purchase a product based on their browsing behavior (view, cart, purchase). \nKey business questions: which products to recommend, which users are likely to \nconvert, and which product categories drive the most revenue.\"",
   "model_name": "XGBoost",
   "metric_label": "Accuracy",
   "metric_value": 97.45,
   "total_rows": 180519,
-  "avg_conf": 90.8,
+  "avg_conf": 86.9,
   "pred_dist": {
     "1.0": 103400,
     "0.0": 77119
   },
   "feat_imp": {
-    "feat_ratio": 0.9997000098228455,
-    "days_for_shipment_scheduled": 9.999999747378752e-05,
-    "shipping_efficiency": 9.999999747378752e-05,
+    "feat_ratio": 0.9998000264167786,
+    "shipping_efficiency": 0.0,
     "feat_interact": 0.0,
+    "feat_diff": 0.0,
     "days_for_shipping_real": 0.0,
-    "shipping_time_interaction": 0.0,
     "feat_sum": 0.0,
-    "feat_diff": 0.0
+    "days_for_shipment_scheduled": 0.0,
+    "shipping_time_interaction": 0.0
   },
   "hypotheses": [
-    {
-      "id": "H1",
-      "verdict": "FALSE",
-      "statement": "Orders with higher actual shipping days (days_for_shipping_real) tend to have higher late_delivery_r",
-      "insight": "The business should focus on keeping shipping times at 3-4 days maximum, as delays beyond this threshold dramatically in"
-    },
-    {
-      "id": "H2",
-      "verdict": "TRUE",
-      "statement": "Orders with lower scheduled shipping days (days_for_shipment_scheduled) tend to have higher late_del",
-      "insight": "The business should either avoid offering 1-2 day shipping options or invest heavily in expedited logistics capabilities"
-    },
-    {
-      "id": "H3",
-      "verdict": "TRUE",
-      "statement": "Orders where actual shipping days exceed scheduled days tend to have higher late_delivery_risk",
-      "insight": "The business should prioritize reducing shipping delays as even a 1-day delay is strongly associated with late delivery "
-    },
-    {
-      "id": "H4",
-      "verdict": "TRUE",
-      "statement": "Orders of specific transaction types (type) tend to have higher late_delivery_risk due to different ",
-      "insight": "The business should prioritize resource allocation and handling procedures for PAYMENT, DEBIT, and CASH transactions whi"
-    },
-    {
-      "id": "H5",
-      "verdict": "INCONCLUSIVE",
-      "statement": "Orders from specific markets (market) tend to have higher late_delivery_risk due to geographical and",
-      "insight": "The consistently high late delivery risk across all markets (54-55%) indicates a systemic operational issue rather than "
-    },
-    {
-      "id": "H6",
-      "verdict": "TRUE",
-      "statement": "Orders in specific product categories (category_name) tend to have higher late_delivery_risk due to ",
-      "insight": "The business should prioritize improving logistics and inventory management for high-risk categories like Golf Bags & Ca"
-    },
-    {
-      "id": "H7",
-      "verdict": "FALSE",
-      "statement": "Orders from specific customer segments (customer_segment) tend to have higher late_delivery_risk due",
-      "insight": "Since all customer segments face similar late delivery risks, the business should focus on systemic operational improvem"
-    },
-    {
-      "id": "H8",
-      "verdict": "TRUE",
-      "statement": "Orders from specific departments (department_name) tend to have higher late_delivery_risk due to ope",
-      "insight": "The business should investigate operational processes in Pet Shop and Book Shop departments to identify bottlenecks and "
-    },
-    {
-      "id": "H9",
-      "verdict": "INCONCLUSIVE",
-      "statement": "Orders shipped to specific countries (order_country) tend to have higher late_delivery_risk due to c",
-      "insight": "The business should collect more data from these countries before making shipping policy decisions, as current patterns "
-    },
-    {
-      "id": "H10",
-      "verdict": "TRUE",
-      "statement": "Orders with lower benefit per order (benefit_per_order) tend to have slightly higher late_delivery_r",
-      "insight": "The business should consider implementing priority fulfillment processes for higher-value orders while investigating whe"
-    }
+    {"id":"H1","verdict":"TRUE","statement":"Orders where days_for_shipping_real exceeds days_for_shipment_scheduled tend to have higher late_del","insight":"Orders that take longer than their scheduled shipping window are highly likely to be flagged as late delivery risks, so "},
+    {"id":"H2","verdict":"FALSE","statement":"Orders with a higher days_for_shipping_real tend to have higher late_delivery_risk, since longer act","insight":"The business should focus monitoring efforts on orders expected to ship in the 4.8-6.0 day range, as these are nearly ce"},
+    {"id":"H3","verdict":"FALSE","statement":"Orders with a lower days_for_shipment_scheduled tend to have higher late_delivery_risk, as tighter s","insight":"Shipments scheduled with very tight windows (around 0.8-1.6 days) pose the greatest late delivery risk, suggesting the b"},
+    {"id":"H4","verdict":"FALSE","statement":"Orders shipped to certain markets (e.g., LATAM or Africa) tend to have higher late_delivery_risk com","insight":"Since late delivery risk is uniformly high (~55%) across all markets, the root cause is likely systemic in operations or"},
+    {"id":"H5","verdict":"FALSE","statement":"Orders belonging to certain order types (e.g., 'DEBIT' or 'TRANSFER') tend to have higher late_deliv","insight":"Since TRANSFER orders actually have the lowest late delivery risk, payment type is not a reliable predictor of fulfillme"},
+    {"id":"H6","verdict":"FALSE","statement":"Orders from certain department_names (e.g., large/heavy item departments like 'Outdoors' or 'Fitness","insight":"Late delivery risk is fairly uniform across all departments (ranging only from ~54.7% to ~58.9%), suggesting the issue i"},
+    {"id":"H7","verdict":"FALSE","statement":"Orders placed by customers in certain customer_segments (e.g., 'Consumer' vs 'Corporate') tend to ha","insight":"Since late delivery risk is uniformly high (~55%) across all customer segments, the fulfillment problem is systemic and "},
+    {"id":"H8","verdict":"INCONCLUSIVE","statement":"Orders shipped to distant or remote order_countries tend to have higher late_delivery_risk, as inter","insight":"The business should investigate logistics partnerships and fulfillment strategies for consistently high-risk countries l"},
+    {"id":"H9","verdict":"FALSE","statement":"Orders with lower benefit_per_order tend to have higher late_delivery_risk, as low-margin orders may","insight":"Fulfillment and delivery delays appear to be driven by operational or logistical factors rather than order profitability"},
+    {"id":"H10","verdict":"TRUE","statement":"Orders placed in certain category_names (e.g., bulky or high-volume categories) tend to have higher ","insight":"The business should prioritize targeted logistics improvements and buffer inventory for high-risk categories like Golf B"}
   ],
   "insights": [
-    {
-      "title": "Model Performance",
-      "body": "TITLE: Late Deliveries Predicted with Precision\n\nBODY: Our XGBoost model achieves 97% accuracy in predicting which of 180,000+ shipments will arrive late, with an average confidence of 91%. This enables operations teams to proactively flag at-risk orders before they become customer service problems."
-    }
+    {"title":"Model Predicts Delivery Risk Accurately","body":"The XGBoost model achieves 97.45% accuracy across 180,519 orders, giving operations teams a highly reliable tool for anticipating delivery failures before they happen. With an average confidence score of 87%, the model delivers actionable predictions, not just guesses."},
+    {"title":"Late Deliveries Are the Majority Case","body":"Over 57% of orders in the dataset are flagged as late delivery risks, meaning delayed shipments are not an exception but a systemic pattern. This scale of exposure demands immediate operational intervention, not just monitoring."},
+    {"title":"Shipping Delays Drive Risk More Than Anything","body":"The top predictive signals are shipping efficiency and actual versus scheduled shipping days, confirming that internal logistics execution is the primary driver of late delivery risk. When real shipping time exceeds the scheduled window, risk rises sharply and consistently."},
+    {"title":"Product Category Shapes Delivery Outcomes","body":"Validated analysis confirms that certain product categories, particularly bulky or high-volume items, carry significantly higher late delivery rates. Targeted fulfillment strategies by category, such as adjusted lead times or dedicated carrier routing, could meaningfully reduce overall risk exposure."}
   ],
   "cat_breakdown": {
-    "column": "type",
+    "column": "event_type",
     "data": {
-      "CASH": 56.6,
-      "DEBIT": 57.2,
-      "PAYMENT": 57.5,
-      "TRANSFER": 57.4
+      "cart": 56.9,
+      "purchase": 57.5,
+      "view": 57.3
     }
   },
-  "true_hyp_count": 6,
-  "false_hyp_count": 2,
-  "inc_hyp_count": 2
+  "true_hyp_count": 2,
+  "false_hyp_count": 7,
+  "inc_hyp_count": 1
 };
 
-        // Set Chart.js dark theme
-        Chart.defaults.color = '#94a3b8';
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmtNum(n) {
+  return Number(n).toLocaleString();
+}
+function truncate(str, len) {
+  const clean = str.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  return clean.length > len ? clean.slice(0, len) + '…' : clean;
+}
 
-        // Helper: format number with commas
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
+// ── Chart defaults ─────────────────────────────────────────────────────────
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#2d3452';
+Chart.defaults.font.family = 'Inter, sans-serif';
 
-        // Helper: truncate text
-        function truncate(str, maxLen) {
-            if (str.length <= maxLen) return str;
-            return str.substring(0, maxLen) + '...';
-        }
+// ── Header ─────────────────────────────────────────────────────────────────
+document.getElementById('dash-title').textContent = DATA.title;
+document.getElementById('dash-subtitle').textContent = truncate(DATA.context, 120);
+document.getElementById('model-badge').textContent =
+  DATA.model_name + ' · ' + DATA.metric_label + ' ' + DATA.metric_value + '%';
 
-        // Populate header
-        document.getElementById('dashboardTitle').textContent = DATA.title;
-        const contextFirstLine = DATA.context.split('\n')[0];
-        document.getElementById('dashboardSubtitle').textContent = truncate(contextFirstLine, 120);
-        document.getElementById('modelBadge').textContent = `${DATA.model_name} · ${DATA.metric_label} ${DATA.metric_value}%`;
+// ── KPI Cards ──────────────────────────────────────────────────────────────
+document.getElementById('kpi-records').innerHTML =
+  fmtNum(DATA.total_rows);
+document.getElementById('kpi-accuracy').innerHTML =
+  DATA.metric_value + '<span class="kpi-unit">%</span>';
+document.getElementById('kpi-accuracy-sub').textContent =
+  DATA.metric_label + ' · ' + DATA.model_name;
+document.getElementById('kpi-confidence').innerHTML =
+  (DATA.avg_conf != null ? DATA.avg_conf + '<span class="kpi-unit">%</span>' : 'N/A');
+const totalHyp = DATA.true_hyp_count + DATA.false_hyp_count + DATA.inc_hyp_count;
+document.getElementById('kpi-hyp').innerHTML =
+  DATA.true_hyp_count + '<span class="kpi-unit">/' + totalHyp + '</span>';
 
-        // Populate KPIs
-        document.getElementById('totalRecords').textContent = formatNumber(DATA.total_rows);
-        document.getElementById('modelAccuracy').textContent = `${DATA.metric_value}%`;
-        document.getElementById('avgConfidence').textContent = DATA.avg_conf ? `${DATA.avg_conf}%` : 'N/A';
-        const totalHyp = DATA.hypotheses.length;
-        document.getElementById('trueHypotheses').textContent = `${DATA.true_hyp_count}/${totalHyp}`;
+// ── Doughnut Chart ─────────────────────────────────────────────────────────
+(function() {
+  const predKeys = Object.keys(DATA.pred_dist);
+  const labels = predKeys.map(k => k === '1.0' ? 'Late Risk' : 'On Time');
+  const values = predKeys.map(k => DATA.pred_dist[k]);
+  const colors = predKeys.map(k => k === '1.0' ? '#ef4444' : '#22c55e');
+  const borderColors = predKeys.map(k => k === '1.0' ? '#c53030' : '#16a34a');
 
-        // Prediction Distribution Chart
-        const predLabels = [];
-        const predValues = [];
-        const predColors = [];
-        for (const [key, value] of Object.entries(DATA.pred_dist)) {
-            if (key === '0.0' || key === '0') {
-                predLabels.push('On Time');
-                predColors.push('#22c55e');
-            } else {
-                predLabels.push('Late');
-                predColors.push('#ef4444');
+  new Chart(document.getElementById('doughnutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderColor: borderColors,
+        borderWidth: 2,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e2130',
+          borderColor: '#2d3452',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: function(ctx) {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ' ' + fmtNum(ctx.parsed) + ' (' + pct + '%)';
             }
-            predValues.push(value);
+          }
         }
-        const ctxPred = document.getElementById('predDistChart').getContext('2d');
-        new Chart(ctxPred, {
-            type: 'doughnut',
-            data: {
-                labels: predLabels,
-                datasets: [{
-                    data: predValues,
-                    backgroundColor: predColors,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                }
-            }
-        });
+      }
+    }
+  });
 
-        // Feature Importance Chart
-        const featEntries = Object.entries(DATA.feat_imp).sort((a, b) => b[1] - a[1]);
-        const featLabels = featEntries.map(e => e[0]);
-        const featValues = featEntries.map(e => e[1]);
-        const ctxFeat = document.getElementById('featImpChart').getContext('2d');
-        new Chart(ctxFeat, {
-            type: 'bar',
-            data: {
-                labels: featLabels,
-                datasets: [{
-                    label: 'Importance Score',
-                    data: featValues,
-                    backgroundColor: '#4f8ef7',
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Importance Score',
-                            color: '#94a3b8'
-                        },
-                        grid: {
-                            color: '#2d3348'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
+  // Legend
+  const legendEl = document.getElementById('donut-legend');
+  labels.forEach((lbl, i) => {
+    const total = values.reduce((a, b) => a + b, 0);
+    const pct = ((values[i] / total) * 100).toFixed(1);
+    legendEl.innerHTML += `
+      <div class="legend-item">
+        <span class="legend-dot" style="background:${colors[i]}"></span>
+        <span>${lbl} <strong style="color:#cbd5e1">${pct}%</strong></span>
+      </div>`;
+  });
+})();
 
-        // Business Insights
-        const insightsGrid = document.getElementById('insightsGrid');
-        const icons = ['📊', '🎯', '⚡', '💡'];
-        const styles = ['accent', 'success', 'warning', 'danger'];
-        DATA.insights.forEach((insight, idx) => {
-            const card = document.createElement('div');
-            card.className = `insight-card ${styles[idx % styles.length]}`;
-            const title = insight.body.includes('TITLE:') ? insight.body.split('TITLE:')[1].split('BODY:')[0].trim() : insight.title;
-            const body = insight.body.includes('BODY:') ? insight.body.split('BODY:')[1].trim() : insight.body;
-            card.innerHTML = `
-                <h3>${icons[idx % icons.length]} ${title}</h3>
-                <p>${body}</p>
-            `;
-            insightsGrid.appendChild(card);
-        });
+// ── Feature Importance Chart ───────────────────────────────────────────────
+(function() {
+  const entries = Object.entries(DATA.feat_imp)
+    .sort((a, b) => b[1] - a[1]);
 
-        // Hypothesis Validation Table
-        const hypothesesTable = document.getElementById('hypothesesTable');
-        DATA.hypotheses.forEach(hyp => {
-            const tr = document.createElement('tr');
-            const verdictClass = hyp.verdict.toLowerCase();
-            tr.innerHTML = `
-                <td><strong>${hyp.id}</strong></td>
-                <td><span class="verdict-badge ${verdictClass}">${hyp.verdict}</span></td>
-                <td>${hyp.statement}</td>
-                <td>${hyp.insight}</td>
-            `;
-            hypothesesTable.appendChild(tr);
-        });
+  const labels = entries.map(([k]) => k.replace(/_/g, ' '));
+  const values = entries.map(([, v]) => parseFloat(v.toFixed(6)));
 
-        // Category Breakdown Chart (if exists)
-        if (DATA.cat_breakdown && DATA.cat_breakdown.column) {
-            document.getElementById('catBreakdownSection').style.display = 'block';
-            document.getElementById('catBreakdownTitle').textContent = `Late Rate by ${DATA.cat_breakdown.column}`;
-            const catLabels = Object.keys(DATA.cat_breakdown.data);
-            const catValues = Object.values(DATA.cat_breakdown.data);
-            const ctxCat = document.getElementById('catBreakdownChart').getContext('2d');
-            new Chart(ctxCat, {
-                type: 'bar',
-                data: {
-                    labels: catLabels,
-                    datasets: [{
-                        label: 'Late Rate (%)',
-                        data: catValues,
-                        backgroundColor: '#4f8ef7',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            title: {
-                                display: true,
-                                text: 'Late Rate (%)',
-                                color: '#94a3b8'
-                            },
-                            grid: {
-                                color: '#2d3348'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
+  // Build gradient colors based on rank
+  const baseColors = entries.map((_, i) => {
+    const t = i / Math.max(entries.length - 1, 1);
+    // Interpolate #4f8ef7 → #818cf8
+    const r = Math.round(79 + (129 - 79) * t);
+    const g = Math.round(142 + (140 - 142) * t);
+    const b = Math.round(247 + (248 - 247) * t);
+    return `rgba(${r},${g},${b},0.85)`;
+  });
+
+  new Chart(document.getElementById('featureChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Importance Score',
+        data: values,
+        backgroundColor: baseColors,
+        borderColor: baseColors.map(c => c.replace('0.85', '1')),
+        borderWidth: 1,
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e2130',
+          borderColor: '#2d3452',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: ctx => ' ' + ctx.parsed.x.toFixed(6)
+          }
         }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Importance Score',
+            color: '#64748b',
+            font: { size: 11 }
+          },
+          grid: { color: '#1a1f35' },
+          ticks: { color: '#64748b', font: { size: 11 } }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#94a3b8', font: { size: 11 } }
+        }
+      }
+    }
+  });
+})();
 
-        // Footer timestamp
-        document.getElementById('timestamp').textContent = new Date().toLocaleString();
-    </script>
-</body>
-</html>
+// ── Business Insights ──────────────────────────────────────────────────────
+(function() {
+  const icons = ['📊', '🎯', '⚡', '💡'];
+  const grid = document.getElementById('insights-grid');
+  DATA.insights.forEach((ins, i) => {
+    const card = document.createElement('div');
+    card.className = 'insight-card';
+    card.innerHTML = `
+      <span class="insight-icon">${icons[i % icons.length]}</span>
+      <div class="insight-title">${ins.title}</div>
+      <div class="insight-body">${ins.body}</div>`;
+    grid.appendChild(card);
+  });
+})();
+
+// ── Hypothesis Table ───────────────────────────────────────────────────────
+(function() {
+  const tbody = document.getElementById('hyp-tbody');
+  DATA.hypotheses.forEach(h => {
+    const verdictClass = h.verdict === 'TRUE'
+      ? 'verdict-true'
+      : h.verdict === 'FALSE'
+        ? 'verdict-false'
+        : 'verdict-inconclusive';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${h.id}</td>
+      <td><span class="verdict-badge ${verdictClass}">${h.verdict}</span></td>
+      <td class="hy

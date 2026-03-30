@@ -1,153 +1,153 @@
 [
   {
     "id": "H1",
-    "statement": "Orders with higher actual shipping days (days_for_shipping_real) tend to have higher late_delivery_risk",
+    "statement": "Orders where days_for_shipping_real exceeds days_for_shipment_scheduled tend to have higher late_delivery_risk, as actual shipping time surpassing the scheduled window is a direct indicator of lateness.",
     "columns": [
       "days_for_shipping_real",
+      "days_for_shipment_scheduled",
       "late_delivery_risk"
     ],
-    "test_code": "result = df.groupby('days_for_shipping_real')['late_delivery_risk'].mean().sort_values(ascending=False)\nprint(result.head(10))",
-    "chart_type": "scatter",
+    "test_code": "df['shipping_delay'] = df['days_for_shipping_real'] - df['days_for_shipment_scheduled']\nresult = df.groupby('late_delivery_risk')['shipping_delay'].mean()\nprint(result)\ncorr = df['shipping_delay'].corr(df['late_delivery_risk'])\nprint(f'Correlation: {corr:.4f}')",
+    "chart_type": "box",
     "expected_direction": "positive",
-    "verdict": "FALSE",
-    "reason": "The data shows that orders with higher actual shipping days (5-6 days) have high late delivery risk (95.8%), but orders with 4 days have much lower risk (23.7%), and the pattern is not monotonically increasing, indicating shipping days beyond a threshold trigger late risk rather than a linear relationship.",
-    "business_insight": "The business should focus on keeping shipping times at 3-4 days maximum, as delays beyond this threshold dramatically increase late delivery risk from ~24% to ~96%, suggesting a critical service level agreement or customer expectation boundary.",
-    "output": "days_for_shipping_real\n5.0    0.958811\n6.0    0.957038\n1.0    0.956410\n2.0    0.468279\n4.0    0.237050\n3.0    0.234973\n0.0    0.000000\nName: late_delivery_risk, dtype: float64\n"
+    "verdict": "TRUE",
+    "reason": "The strong correlation of 0.78 and the stark difference in mean shipping delay between on-time orders (-0.71) and late-delivery-risk orders (1.62) confirms that exceeding the scheduled shipping window is a direct predictor of late delivery risk.",
+    "business_insight": "Orders that take longer than their scheduled shipping window are highly likely to be flagged as late delivery risks, so proactively monitoring and expediting orders approaching their shipping deadline could significantly reduce late deliveries.",
+    "output": "late_delivery_risk\n0.0   -0.711584\n1.0    1.618184\nName: shipping_delay, dtype: float64\nCorrelation: 0.7776\n"
   },
   {
     "id": "H2",
-    "statement": "Orders with lower scheduled shipping days (days_for_shipment_scheduled) tend to have higher late_delivery_risk due to tighter delivery windows",
+    "statement": "Orders with a higher days_for_shipping_real tend to have higher late_delivery_risk, since longer actual shipping durations are more likely to breach scheduled delivery windows.",
     "columns": [
-      "days_for_shipment_scheduled",
+      "days_for_shipping_real",
       "late_delivery_risk"
     ],
-    "test_code": "result = df.groupby('days_for_shipment_scheduled')['late_delivery_risk'].mean().sort_values(ascending=False)\nprint(result.head(10))",
+    "test_code": "df['shipping_real_bin'] = pd.cut(df['days_for_shipping_real'], bins=5)\nresult = df.groupby('shipping_real_bin')['late_delivery_risk'].mean().sort_index()\nprint(result)",
     "chart_type": "bar",
-    "expected_direction": "negative",
-    "verdict": "TRUE",
-    "reason": "The data shows a clear inverse relationship where 1-day scheduled shipments have 95.3% late delivery risk compared to 4-day shipments at 38.1%, confirming that tighter delivery windows significantly increase late delivery risk.",
-    "business_insight": "The business should either avoid offering 1-2 day shipping options or invest heavily in expedited logistics capabilities, as current operations cannot reliably meet tight delivery windows with over 95% of 1-day shipments arriving late.",
-    "output": "days_for_shipment_scheduled\n1.0    0.953225\n2.0    0.766328\n0.0    0.457430\n4.0    0.380717\nName: late_delivery_risk, dtype: float64\n"
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "Late delivery risk does not monotonically increase with shipping days; instead it follows a non-linear pattern where mid-range bins (2.4\u20134.8 days) have lower risk (~23-24%) than the lowest bins (~46-47%), and only the highest bin (4.8-6.0 days) shows very high risk (~96%).",
+    "business_insight": "The business should focus monitoring efforts on orders expected to ship in the 4.8-6.0 day range, as these are nearly certain to be late, while also investigating why very short shipping durations (under 2.4 days) still carry a ~46% late delivery risk.",
+    "output": "shipping_real_bin\n(-0.006, 1.2]    0.457430\n(1.2, 2.4]       0.468279\n(2.4, 3.6]       0.234973\n(3.6, 4.8]       0.237050\n(4.8, 6.0]       0.957916\nName: late_delivery_risk, dtype: float64\n"
   },
   {
     "id": "H3",
-    "statement": "Orders where actual shipping days exceed scheduled days tend to have higher late_delivery_risk",
+    "statement": "Orders with a lower days_for_shipment_scheduled tend to have higher late_delivery_risk, as tighter scheduled windows leave less buffer and increase the chance of missing the deadline.",
     "columns": [
-      "days_for_shipping_real",
       "days_for_shipment_scheduled",
       "late_delivery_risk"
     ],
-    "test_code": "df['shipping_delay'] = df['days_for_shipping_real'] - df['days_for_shipment_scheduled']\nresult = df.groupby('shipping_delay')['late_delivery_risk'].mean().sort_values(ascending=False)\nprint(result.head(10))",
-    "chart_type": "scatter",
-    "expected_direction": "positive",
-    "verdict": "TRUE",
-    "reason": "Orders with positive shipping delays (1-4 days) show ~96% late delivery risk while orders with zero or negative delays (early/on-time) show 0% risk, confirming the hypothesis.",
-    "business_insight": "The business should prioritize reducing shipping delays as even a 1-day delay is strongly associated with late delivery risk, suggesting tight scheduling or the need for buffer time in delivery promises.",
-    "output": "shipping_delay\n 3.0    0.960295\n 2.0    0.959363\n 4.0    0.959043\n 1.0    0.955645\n 0.0    0.000000\n-2.0    0.000000\n-1.0    0.000000\nName: late_delivery_risk, dtype: float64\n"
+    "test_code": "df['scheduled_bin'] = pd.cut(df['days_for_shipment_scheduled'], bins=5)\nresult = df.groupby('scheduled_bin')['late_delivery_risk'].mean().sort_index()\nprint(result)\ncorr = df['days_for_shipment_scheduled'].corr(df['late_delivery_risk'])\nprint(f'Correlation: {corr:.4f}')",
+    "chart_type": "bar",
+    "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "The data shows a non-monotonic relationship where the lowest bin (0-0.8 days) has a moderate risk of 0.46 while the second bin (0.8-1.6 days) has the highest risk of 0.95, and the highest scheduled days bin (3.2-4.0) has the lowest risk of 0.38, with a weak negative correlation of -0.37 that does not support a consistent inverse relationship.",
+    "business_insight": "Shipments scheduled with very tight windows (around 0.8-1.6 days) pose the greatest late delivery risk, suggesting the business should focus logistics resources on that specific scheduling tier rather than broadly assuming shorter schedules always mean higher risk.",
+    "output": "scheduled_bin\n(-0.004, 0.8]    0.457430\n(0.8, 1.6]       0.953225\n(1.6, 2.4]       0.766328\n(2.4, 3.2]            NaN\n(3.2, 4.0]       0.380717\nName: late_delivery_risk, dtype: float64\nCorrelation: -0.3694\n"
   },
   {
     "id": "H4",
-    "statement": "Orders of specific transaction types (type) tend to have higher late_delivery_risk due to different handling requirements",
-    "columns": [
-      "type",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('type')['late_delivery_risk'].agg(['mean', 'count']).sort_values('mean', ascending=False)\nprint(result)",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "TRUE",
-    "reason": "There is a clear difference in late_delivery_risk across transaction types, with PAYMENT, DEBIT, and CASH showing ~57% risk while TRANSFER shows significantly lower risk at ~48.5%.",
-    "business_insight": "The business should prioritize resource allocation and handling procedures for PAYMENT, DEBIT, and CASH transactions which have 15-18% higher late delivery rates compared to TRANSFER transactions, potentially indicating these types require more complex processing or face operational bottlenecks.",
-    "output": "              mean  count\ntype                     \nPAYMENT   0.575291  41725\nDEBIT     0.572177  69295\nCASH      0.566323  19616\nTRANSFER  0.485436  49883\n"
-  },
-  {
-    "id": "H5",
-    "statement": "Orders from specific markets (market) tend to have higher late_delivery_risk due to geographical and logistical challenges",
+    "statement": "Orders shipped to certain markets (e.g., LATAM or Africa) tend to have higher late_delivery_risk compared to orders in markets like Europe or Pacific Asia, due to longer and more complex logistics chains.",
     "columns": [
       "market",
       "late_delivery_risk"
     ],
-    "test_code": "result = df.groupby('market')['late_delivery_risk'].agg(['mean', 'count']).sort_values('mean', ascending=False)\nprint(result)",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "INCONCLUSIVE",
-    "reason": "While Europe shows the highest late delivery risk at 55.2%, the differences across markets are minimal (less than 1 percentage point range from 54.4% to 55.2%), suggesting market location has negligible practical impact on delivery risk.",
-    "business_insight": "The consistently high late delivery risk across all markets (54-55%) indicates a systemic operational issue rather than market-specific logistical challenges, requiring company-wide process improvements rather than market-targeted interventions.",
-    "output": "                  mean  count\nmarket                       \nEurope        0.552078  50252\nPacific Asia  0.550460  41260\nUSCA          0.548006  25799\nAfrica        0.545893  11614\nLATAM         0.543552  51594\n"
-  },
-  {
-    "id": "H6",
-    "statement": "Orders in specific product categories (category_name) tend to have higher late_delivery_risk due to specialized handling or inventory issues",
-    "columns": [
-      "category_name",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('category_name')['late_delivery_risk'].agg(['mean', 'count']).sort_values('mean', ascending=False)\nprint(result.head(10))",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "TRUE",
-    "reason": "The data shows clear variation in late delivery risk across product categories, with Golf Bags & Carts at 68.9% and other categories ranging from 56-60%, indicating category-specific factors do influence delivery performance.",
-    "business_insight": "The business should prioritize improving logistics and inventory management for high-risk categories like Golf Bags & Carts, Lacrosse, and Pet Supplies to reduce late deliveries and improve customer satisfaction.",
-    "output": "                         mean  count\ncategory_name                       \nGolf Bags & Carts    0.688525     61\nLacrosse             0.600583    343\nPet Supplies         0.589431    492\nCameras              0.581081    592\nStrength Training    0.576577    111\nAs Seen on  TV!      0.573529     68\nMusic                0.571429    434\nAccessories          0.569663   1780\nFitness Accessories  0.569579    309\nBooks                0.565432    405\n"
-  },
-  {
-    "id": "H7",
-    "statement": "Orders from specific customer segments (customer_segment) tend to have higher late_delivery_risk due to different service level agreements",
-    "columns": [
-      "customer_segment",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('customer_segment')['late_delivery_risk'].agg(['mean', 'count']).sort_values('mean', ascending=False)\nprint(result)",
+    "test_code": "result = df.groupby('market')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result)",
     "chart_type": "bar",
     "expected_direction": "positive",
     "verdict": "FALSE",
-    "reason": "The late delivery risk rates across all three customer segments are nearly identical (54.7-55.1%), showing no meaningful difference that would support the hypothesis of segment-specific service level agreements causing different risk levels.",
-    "business_insight": "Since all customer segments face similar late delivery risks, the business should focus on systemic operational improvements rather than segment-specific interventions to reduce delivery delays.",
-    "output": "                      mean  count\ncustomer_segment                 \nHome Office       0.550704  32226\nConsumer          0.548084  93504\nCorporate         0.547227  54789\n"
+    "reason": "Late delivery risk rates are nearly identical across all markets (ranging only from 54.4% to 55.2%), with Europe and Pacific Asia actually showing the highest rates, directly contradicting the hypothesis that LATAM and Africa would have higher risk.",
+    "business_insight": "Since late delivery risk is uniformly high (~55%) across all markets, the root cause is likely systemic in operations or data labeling rather than region-specific logistics complexity, requiring a company-wide solution rather than targeted regional improvements.",
+    "output": "              late_risk_rate  order_count\nmarket                                   \nEurope              0.552078        50252\nPacific Asia        0.550460        41260\nUSCA                0.548006        25799\nAfrica              0.545893        11614\nLATAM               0.543552        51594\n"
   },
   {
-    "id": "H8",
-    "statement": "Orders from specific departments (department_name) tend to have higher late_delivery_risk due to operational efficiency differences",
+    "id": "H5",
+    "statement": "Orders belonging to certain order types (e.g., 'DEBIT' or 'TRANSFER') tend to have higher late_delivery_risk compared to types like 'CASH', possibly due to payment processing delays affecting fulfillment start times.",
+    "columns": [
+      "type",
+      "late_delivery_risk"
+    ],
+    "test_code": "result = df.groupby('type')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result)",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "DEBIT and TRANSFER do not consistently show higher late delivery risk; DEBIT is slightly above average but TRANSFER has the lowest rate (48.5%), and CASH is comparable to PAYMENT and DEBIT, contradicting the hypothesized pattern.",
+    "business_insight": "Since TRANSFER orders actually have the lowest late delivery risk, payment type is not a reliable predictor of fulfillment delays, and the business should investigate other factors driving the ~57% late delivery rate across most order types.",
+    "output": "          late_risk_rate  order_count\ntype                                 \nPAYMENT         0.575291        41725\nDEBIT           0.572177        69295\nCASH            0.566323        19616\nTRANSFER        0.485436        49883\n"
+  },
+  {
+    "id": "H6",
+    "statement": "Orders from certain department_names (e.g., large/heavy item departments like 'Outdoors' or 'Fitness') tend to have higher late_delivery_risk due to more complex handling and shipping requirements.",
     "columns": [
       "department_name",
       "late_delivery_risk"
     ],
-    "test_code": "result = df.groupby('department_name')['late_delivery_risk'].agg(['mean', 'count']).sort_values('mean', ascending=False)\nprint(result)",
+    "test_code": "result = df.groupby('department_name')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result.head(10))",
     "chart_type": "bar",
     "expected_direction": "positive",
-    "verdict": "TRUE",
-    "reason": "There is a measurable variation in late delivery risk across departments, with Pet Shop (58.9%) and Book Shop (56.5%) showing notably higher rates than Footwear (54.7%) and Discs Shop (54.4%), indicating operational efficiency differences of approximately 4 percentage points.",
-    "business_insight": "The business should investigate operational processes in Pet Shop and Book Shop departments to identify bottlenecks and implement best practices from better-performing departments like Footwear and Discs Shop to reduce overall late delivery risk.",
-    "output": "                        mean  count\ndepartment_name                    \nPet Shop            0.589431    492\nBook Shop           0.565432    405\nHealth and Beauty   0.558011    362\nFitness             0.555466   2479\nOutdoors            0.554925   9686\nTechnology          0.550171   1465\nGolf                0.547803  33220\nFan Shop            0.547748  66861\nApparel             0.547471  48998\nFootwear            0.547263  14525\nDiscs Shop          0.544423   2026\n"
+    "verdict": "FALSE",
+    "reason": "Outdoors and Fitness do have relatively high late delivery risk rates (~55%), but they are not the highest \u2014 Pet Shop, Book Shop, and Health and Beauty all show higher rates, indicating department type alone does not predict late delivery risk as hypothesized.",
+    "business_insight": "Late delivery risk is fairly uniform across all departments (ranging only from ~54.7% to ~58.9%), suggesting the issue is systemic across the supply chain rather than specific to heavy or complex-item departments, and therefore requires a company-wide logistics intervention rather than department-targeted solutions.",
+    "output": "                    late_risk_rate  order_count\ndepartment_name                                \nPet Shop                  0.589431          492\nBook Shop                 0.565432          405\nHealth and Beauty         0.558011          362\nFitness                   0.555466         2479\nOutdoors                  0.554925         9686\nTechnology                0.550171         1465\nGolf                      0.547803        33220\nFan Shop                  0.547748        66861\nApparel             "
   },
   {
-    "id": "H9",
-    "statement": "Orders shipped to specific countries (order_country) tend to have higher late_delivery_risk due to customs and international shipping complexities",
+    "id": "H7",
+    "statement": "Orders placed by customers in certain customer_segments (e.g., 'Consumer' vs 'Corporate') tend to have higher late_delivery_risk, as fulfillment prioritization may differ by segment.",
+    "columns": [
+      "customer_segment",
+      "late_delivery_risk"
+    ],
+    "test_code": "result = df.groupby('customer_segment')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result)",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "The late delivery risk rates across all three customer segments are virtually identical (ranging only from 54.72% to 55.07%), indicating no meaningful difference in fulfillment prioritization by segment.",
+    "business_insight": "Since late delivery risk is uniformly high (~55%) across all customer segments, the fulfillment problem is systemic and not segment-specific, requiring a broad operational fix rather than a targeted segment-level intervention.",
+    "output": "                  late_risk_rate  order_count\ncustomer_segment                             \nHome Office             0.550704        32226\nConsumer                0.548084        93504\nCorporate               0.547227        54789\n"
+  },
+  {
+    "id": "H8",
+    "statement": "Orders shipped to distant or remote order_countries tend to have higher late_delivery_risk, as international or cross-border logistics introduce more variability and delay risk.",
     "columns": [
       "order_country",
       "late_delivery_risk"
     ],
-    "test_code": "result = df.groupby('order_country')['late_delivery_risk'].agg(['mean', 'count']).sort_values('mean', ascending=False)\nprint(result.head(10))",
+    "test_code": "result = df.groupby('order_country')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result.head(15))",
     "chart_type": "bar",
     "expected_direction": "positive",
     "verdict": "INCONCLUSIVE",
-    "reason": "While these countries show 100% late delivery risk, the sample sizes are extremely small (2-10 orders each), making it statistically unreliable to conclude that specific countries inherently have higher late delivery risk.",
-    "business_insight": "The business should collect more data from these countries before making shipping policy decisions, as current patterns may reflect random variation rather than systematic issues with customs or international shipping complexities.",
-    "output": "                     mean  count\norder_country                   \nBut\u00e1n                 1.0      5\nArmenia               1.0      5\nGuinea Ecuatorial     1.0      2\nEritrea               1.0      2\nRep\u00fablica de Gambia   1.0      5\nS\u00e1hara Occidental     1.0      2\nSud\u00e1n del Sur         1.0      5\nSuazilandia           1.0      5\nLaos                  1.0      6\nLuxemburgo            1.0     10\n"
+    "reason": "While some distant/remote countries show high late delivery rates, the top results include small sample sizes (2-10 orders) making it statistically unreliable, and without comparing to domestic or nearby countries' rates, we cannot confirm distance is the driving factor.",
+    "business_insight": "The business should investigate logistics partnerships and fulfillment strategies for consistently high-risk countries like Bhutan, Armenia, and Luxembourg, but should collect more order volume before drawing definitive conclusions about distance-based delivery risk.",
+    "output": "                     late_risk_rate  order_count\norder_country                                   \nBut\u00e1n                      1.000000            5\nArmenia                    1.000000            5\nGuinea Ecuatorial          1.000000            2\nEritrea                    1.000000            2\nRep\u00fablica de Gambia        1.000000            5\nS\u00e1hara Occidental          1.000000            2\nSud\u00e1n del Sur              1.000000            5\nSuazilandia                1.000000            5\nLaos      "
   },
   {
-    "id": "H10",
-    "statement": "Orders with lower benefit per order (benefit_per_order) tend to have slightly higher late_delivery_risk due to lower prioritization in fulfillment",
+    "id": "H9",
+    "statement": "Orders with lower benefit_per_order tend to have higher late_delivery_risk, as low-margin orders may receive lower fulfillment priority, leading to delayed processing and shipping.",
     "columns": [
       "benefit_per_order",
       "late_delivery_risk"
     ],
-    "test_code": "df['benefit_quartile'] = pd.qcut(df['benefit_per_order'], q=4, labels=['Q1_Low', 'Q2', 'Q3', 'Q4_High'], duplicates='drop')\nresult = df.groupby('benefit_quartile')['late_delivery_risk'].mean()\nprint(result)",
-    "chart_type": "box",
+    "test_code": "df['benefit_bin'] = pd.qcut(df['benefit_per_order'], q=5, duplicates='drop', labels=['Q1_lowest', 'Q2', 'Q3', 'Q4', 'Q5_highest'])\nresult = df.groupby('benefit_bin')['late_delivery_risk'].mean().sort_index()\nprint(result)\ncorr = df['benefit_per_order'].corr(df['late_delivery_risk'])\nprint(f'Correlation: {corr:.4f}')",
+    "chart_type": "bar",
     "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "Late delivery risk is nearly identical across all benefit quintiles (ranging only from 0.545 to 0.552) and the correlation is virtually zero (-0.0037), indicating no meaningful relationship between order margin and delivery risk.",
+    "business_insight": "Fulfillment and delivery delays appear to be driven by operational or logistical factors rather than order profitability, suggesting the business does not (intentionally or unintentionally) prioritize high-margin orders in its shipping process.",
+    "output": "benefit_bin\nQ1_lowest     0.549115\nQ2            0.552245\nQ3            0.544820\nQ4            0.549105\nQ5_highest    0.546167\nName: late_delivery_risk, dtype: float64\nCorrelation: -0.0037\n"
+  },
+  {
+    "id": "H10",
+    "statement": "Orders placed in certain category_names (e.g., bulky or high-volume categories) tend to have higher late_delivery_risk, as category-specific logistics complexity and demand spikes can disrupt on-time delivery.",
+    "columns": [
+      "category_name",
+      "late_delivery_risk"
+    ],
+    "test_code": "result = df.groupby('category_name')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).query('order_count >= 50').sort_values('late_risk_rate', ascending=False)\nprint(result.head(15))",
+    "chart_type": "bar",
+    "expected_direction": "positive",
     "verdict": "TRUE",
-    "reason": "The data shows a clear descending pattern where Q1_Low benefit orders have the highest late delivery risk (55.06%) while Q4_High benefit orders have the lowest risk (54.66%), confirming that lower benefit orders face higher delivery risk.",
-    "business_insight": "The business should consider implementing priority fulfillment processes for higher-value orders while investigating whether resource constraints are causing lower-benefit orders to be deprioritized, leading to increased delivery delays.",
-    "output": "benefit_quartile\nQ1_Low     0.550627\nQ2         0.548496\nQ3         0.547460\nQ4_High    0.546581\nName: late_delivery_risk, dtype: float64\n"
+    "reason": "Significant variation in late delivery risk across categories is confirmed, with rates ranging notably high (56-69%) in categories like Golf Bags & Carts, Pet Supplies, and Cameras, supporting that category-specific logistics complexity drives late delivery risk.",
+    "business_insight": "The business should prioritize targeted logistics improvements and buffer inventory for high-risk categories like Golf Bags & Carts, Pet Supplies, and Cameras to reduce late deliveries and improve customer satisfaction in these segments.",
+    "output": "                     late_risk_rate  order_count\ncategory_name                                   \nGolf Bags & Carts          0.688525           61\nLacrosse                   0.600583          343\nPet Supplies               0.589431          492\nCameras                    0.581081          592\nStrength Training          0.576577          111\nAs Seen on  TV!            0.573529           68\nMusic                      0.571429          434\nAccessories                0.569663         1780\nFitness Ac"
   }
 ]

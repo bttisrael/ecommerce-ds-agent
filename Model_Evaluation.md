@@ -11,18 +11,20 @@
 
 ## AI Diagnostic
 
-## Model Diagnosis: Well-Fitted
+## Diagnosis: Well-Fitted Model
 
-This XGBoost classification model is **well-fitted** and performing excellently. The training accuracy of 97.58% and test accuracy of 97.45% are both very high, with only a 0.13% gap between them. This minimal difference indicates the model generalizes well to unseen data without memorizing the training set. There are no signs of overfitting (which would show a large gap with much higher training accuracy) or underfitting (which would show poor performance on both sets).
+The model shows **no signs of overfitting or underfitting**. The train/test accuracy gap of just 0.0013 (0.13%) is negligible, indicating the model generalizes extremely well to unseen data. Both scores sitting above 97% confirm the model learned meaningful patterns from the data rather than memorizing noise.
 
-The model is production-ready for predicting late delivery risk. The negligible performance gap suggests robust learning of actual patterns rather than noise. You should proceed with standard validation steps like checking performance across different customer segments or time periods, but from a fit perspective, this model shows healthy balance between bias and variance. No immediate architectural changes or regularization adjustments are needed.
+## Practical Recommendation
+
+The model is **production-ready** as-is. The only flags worth investigating are unrelated to fit quality: verify that the **97.45% test accuracy holds across balanced classes** (check precision/recall/F1 if late deliveries are a minority class, since high accuracy can be misleading in imbalanced datasets). Also confirm the test set was kept strictly separate during training to rule out any data leakage inflating these numbers.
 
 ## Optimized Parameters (Optuna)
 ```json
 {
-  "n_estimators": 104,
-  "learning_rate": 0.018507754954953916,
+  "n_estimators": 63,
+  "learning_rate": 0.023386742875571638,
   "max_depth": 7,
-  "subsample": 0.7464645250826458
+  "subsample": 0.5830823325796838
 }
 ```
