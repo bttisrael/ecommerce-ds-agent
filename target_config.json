@@ -1,0 +1,15 @@
+{
+  "target_col": "event_type",
+  "problem_type": "classification",
+  "ai_justification": "Auto-selected fallback: 'event_type' chosen from actual dataset columns.",
+  "ai_feature_strategy": "Create ratio and interaction features between numeric variables.",
+  "ai_insights": [
+    "Dataset has 2,000,000 rows \u00d7 9 columns. Target auto-detected as 'event_type'."
+  ],
+  "hypothesis_insights": [
+    "The business should prioritize marketing spend and inventory optimization for high-converting categories like headphones, blankets, and personal appliances, while investigating why these everyday and mid-tier electronics outperform other categories in driving purchase completions."
+  ],
+  "true_hypotheses": [
+    "Events from specific 'category_code' values tend to have higher purchase event_type rates, as certain product categories (e.g., everyday consumables) convert better than others."
+  ]
+}

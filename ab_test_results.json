@@ -1,0 +1,14 @@
+{
+  "test_type": "classification",
+  "model_a": "XGBoost",
+  "model_b": "LogisticRegression (baseline)",
+  "accuracy_a": 0.9702,
+  "accuracy_b": 0.4918,
+  "delta": 0.4784,
+  "mcnemar_p": 0.0,
+  "chisq_dist_p": 0.0,
+  "p_a_beats_b": 1.0,
+  "n_test": 400000,
+  "winner": "XGBoost",
+  "significant": true
+}

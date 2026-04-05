@@ -5,7 +5,7 @@ echo "E-commerce platform with 285M user events. Goal: predict whether a user
 will purchase a product based on their browsing behavior (view, cart, purchase). 
 Key business questions: which products to recommend, which users are likely to 
 convert, and which product categories drive the most revenue."
-**Shape:** 500000 x 9
+**Shape:** 2000000 x 9
 
 ## Applied Imputation
 - Mode applied to 'category_code'.
@@ -13,36 +13,40 @@ convert, and which product categories drive the most revenue."
 
 ## Detected Outliers (IQR)
 {
-  "product_id": 20947,
-  "category_id": 36003,
-  "price": 42743,
-  "user_id": 406
+  "product_id": 85554,
+  "category_id": 141746,
+  "price": 166353,
+  "user_id": 1346
 }
 
 ## Intelligent Analysis by Claude
 
 ### Identified Target
 **Column:** `event_type`
-**Justification:** Forced via CONFIG['forced_target'] = 'event_type'.
+**Justification:** Auto-selected fallback: 'event_type' chosen from actual dataset columns.
 
 ### Problematic Columns
 []
 
 ### Top Dataset Insights
-1. Target 'event_type' set manually in CONFIG.
-2. Dataset: 500,000 rows × 9 columns.
-3. Value counts: {'view': 480453, 'cart': 13052, 'purchase': 6495}
+1. Dataset has 2,000,000 rows × 9 columns. Target auto-detected as 'event_type'.
 
 ### Recommended Feature Engineering Strategy
 Create ratio and interaction features between numeric variables.
 
 ### Analysis Execution Output
 ```
-event_type
-view        480453
-cart         13052
-purchase      6495
-Name: count, dtype: int64
+(2000000, 9)
+event_time        object
+event_type        object
+product_id         int64
+category_id        int64
+category_code     object
+brand             object
+price            float64
+user_id            int64
+user_session      object
+dtype: object
 
 ```
 

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "H1",
+    "statement": "Users with higher 'price' products in their sessions tend to have lower purchase event_type rates, as high-priced items create friction and reduce conversion likelihood.",
+    "columns": [
+      "price",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['price_bucket'] = pd.qcut(df['price'], q=5, labels=['Very Low','Low','Medium','High','Very High'])\nresult = df.groupby('price_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "bar",
+    "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "Purchase rates do not consistently decrease with higher price buckets; Medium and Very High price buckets actually show higher purchase rates than Low, indicating no clear inverse relationship between price and conversion.",
+    "business_insight": "Price alone does not deter purchases, and mid-to-high priced products may attract more intent-driven shoppers, suggesting the business should focus on product quality and targeting rather than discounting to drive conversions.",
+    "output": "event_type    purchase_rate\nprice_bucket               \nVery Low           0.015206\nLow                0.013322\nMedium             0.018975\nHigh               0.015195\nVery High          0.017421\n"
+  },
+  {
+    "id": "H2",
+    "statement": "Users with higher 'feat_ratio' (engineered feature) tend to have higher purchase event_type rates, suggesting this ratio captures a meaningful signal about purchase intent.",
+    "columns": [
+      "feat_ratio",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['feat_ratio_bucket'] = pd.qcut(df['feat_ratio'].rank(method='first'), q=5, labels=['Q1','Q2','Q3','Q4','Q5'])\nresult = df.groupby('feat_ratio_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "The data shows the opposite pattern \u2014 users with the LOWEST feat_ratio (Q1) have the highest purchase rate (2.88%), while purchase rates monotonically decrease as feat_ratio increases, contradicting the hypothesis.",
+    "business_insight": "Users with lower feat_ratio values are actually stronger purchase intent signals, meaning the feature should be inverted or reinterpreted before using it to target high-value customers.",
+    "output": "event_type         purchase_rate\nfeat_ratio_bucket               \nQ1                      0.028753\nQ2                      0.015725\nQ3                      0.014358\nQ4                      0.013610\nQ5                      0.007707\n"
+  },
+  {
+    "id": "H3",
+    "statement": "Users with higher 'feat_sum' values tend to have higher purchase event_type rates, as aggregated feature sums may reflect greater product engagement.",
+    "columns": [
+      "feat_sum",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['feat_sum_bucket'] = pd.qcut(df['feat_sum'].rank(method='first'), q=5, labels=['Q1','Q2','Q3','Q4','Q5'])\nresult = df.groupby('feat_sum_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "Purchase rates do not consistently increase with higher feat_sum buckets; instead, they peak at Q2 (0.026) and then decline sharply, with Q4 and Q5 having the lowest rates.",
+    "business_insight": "Mid-range engaged users (Q2) are the most likely to purchase, suggesting that very high feature interaction may indicate browsing or non-purchase behavior, and targeted campaigns should focus on this mid-engagement segment.",
+    "output": "event_type       purchase_rate\nfeat_sum_bucket               \nQ1                    0.017300\nQ2                    0.026328\nQ3                    0.017872\nQ4                    0.010497\nQ5                    0.008155\n"
+  },
+  {
+    "id": "H4",
+    "statement": "Sessions/Events with extreme 'price_zscore_abs' (far from mean price) tend to have lower purchase event_type rates, since unusually priced items are less likely to convert.",
+    "columns": [
+      "price_zscore_abs",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['zscore_bucket'] = pd.qcut(df['price_zscore_abs'].rank(method='first'), q=4, labels=['Low','Medium','High','Very High'])\nresult = df.groupby('zscore_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "box",
+    "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "The purchase rate does not monotonically decrease with higher price z-score buckets; Medium z-score has the highest rate (0.0179) while Low z-score has a higher rate than both High and Very High, but the pattern is inconsistent rather than showing a clear negative relationship.",
+    "business_insight": "Unusually priced items do not systematically deter purchases, suggesting customers may be motivated by both bargains and premium offerings, so pricing strategy should focus on value perception rather than avoiding price extremes.",
+    "output": "event_type     purchase_rate\nzscore_bucket               \nLow                 0.015790\nMedium              0.017902\nHigh                0.014414\nVery High           0.016016\n"
+  },
+  {
+    "id": "H5",
+    "statement": "Events associated with specific 'brand' values tend to have significantly different purchase event_type rates, with premium or popular brands showing higher conversion.",
+    "columns": [
+      "brand",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\nbrand_counts = df['brand'].value_counts()\ntop_brands = brand_counts[brand_counts >= 100].index\ndf_filtered = df[df['brand'].isin(top_brands)]\nresult = df_filtered.groupby('brand')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_values('purchase_rate', ascending=False).head(20))",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "INCONCLUSIVE",
+    "reason": "While there is variation in purchase rates across brands (ranging from ~5.3% for oral-b down to ~3.3% for alvitek), the data shown is limited to the top 20 brands and lacks statistical significance testing to confirm these differences are not due to chance.",
+    "business_insight": "Oral-b and tyrex show the highest conversion rates among displayed brands, suggesting focused marketing investment in these brands could yield better returns, but a full statistical analysis across all brands is needed before drawing firm conclusions.",
+    "output": "event_type  purchase_rate\nbrand                    \noral-b           0.052758\ntyrex            0.050000\nbestoy           0.046296\ngoform           0.044872\nsunwide          0.043321\nea               0.041588\nfirestone        0.039604\nbourjois         0.039301\nhubert           0.037572\ngamma            0.036585\npikate           0.036036\nnative           0.035714\nkelli            0.035088\nmoschino         0.035026\nketer            0.034722\nvolta            0.034314\nakom             0.034121\nvoltma"
+  },
+  {
+    "id": "H6",
+    "statement": "Events from specific 'category_code' values tend to have higher purchase event_type rates, as certain product categories (e.g., everyday consumables) convert better than others.",
+    "columns": [
+      "category_code",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ncat_counts = df['category_code'].value_counts()\ntop_cats = cat_counts[cat_counts >= 100].index\ndf_filtered = df[df['category_code'].isin(top_cats)]\nresult = df_filtered.groupby('category_code')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_values('purchase_rate', ascending=False).head(20))",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "TRUE",
+    "reason": "Purchase rates vary significantly across category codes, with electronics.audio.headphone (2.3%) and furniture.bedroom.blanket (2.1%) leading, confirming that certain product categories convert at notably higher rates than others.",
+    "business_insight": "The business should prioritize marketing spend and inventory optimization for high-converting categories like headphones, blankets, and personal appliances, while investigating why these everyday and mid-tier electronics outperform other categories in driving purchase completions.",
+    "output": "event_type                           purchase_rate\ncategory_code                                     \nelectronics.audio.headphone               0.023154\nfurniture.bedroom.blanket                 0.021248\nappliances.personal.scales                0.020605\nappliances.kitchen.microwave              0.019761\nkids.fmcg.diapers                         0.019665\nelectronics.smartphone                    0.019657\nappliances.environment.water_heater       0.019172\ncomputers.components.power_supply        "
+  },
+  {
+    "id": "H7",
+    "statement": "Users with higher 'user_price_ratio' tend to have higher purchase event_type rates, indicating that users browsing products closer to their typical spending range are more likely to convert.",
+    "columns": [
+      "user_price_ratio",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['user_price_ratio_bucket'] = pd.qcut(df['user_price_ratio'].rank(method='first'), q=5, labels=['Q1','Q2','Q3','Q4','Q5'])\nresult = df.groupby('user_price_ratio_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "Purchase rates do not consistently increase with higher user_price_ratio buckets; instead, they fluctuate without a clear upward trend (Q1: 1.69%, Q2: 1.58%, Q3: 1.79%, Q4: 1.43%, Q5: 1.53%), and the highest quintile (Q5) actually has one of the lowest conversion rates.",
+    "business_insight": "Price-to-user-budget alignment does not appear to be a meaningful driver of purchase conversion, suggesting the business should look beyond price ratio when personalizing product recommendations to improve conversion rates.",
+    "output": "event_type               purchase_rate\nuser_price_ratio_bucket               \nQ1                            0.016875\nQ2                            0.015838\nQ3                            0.017857\nQ4                            0.014300\nQ5                            0.015282\n"
+  },
+  {
+    "id": "H8",
+    "statement": "Events with higher 'log_price' values tend to have lower purchase event_type rates, as logarithmically scaled price still negatively impacts conversion for higher-priced products.",
+    "columns": [
+      "log_price",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['log_price_bucket'] = pd.qcut(df['log_price'].rank(method='first'), q=5, labels=['Q1','Q2','Q3','Q4','Q5'])\nresult = df.groupby('log_price_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "line",
+    "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "Purchase rates do not consistently decrease as log_price increases; Q3 has the highest rate (0.0185) and Q2 has the lowest (0.0132), showing no monotonic negative relationship.",
+    "business_insight": "Price alone does not linearly drive conversion behavior, suggesting other factors like product category, brand perception, or promotional context play a stronger role in purchase decisions across price tiers.",
+    "output": "event_type        purchase_rate\nlog_price_bucket               \nQ1                     0.015220\nQ2                     0.013237\nQ3                     0.018527\nQ4                     0.015810\nQ5                     0.017358\n"
+  },
+  {
+    "id": "H9",
+    "statement": "Events with higher 'feat_interact' values tend to have higher purchase event_type rates, suggesting the interaction feature captures cross-signal purchase intent better than individual features.",
+    "columns": [
+      "feat_interact",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['feat_interact_bucket'] = pd.qcut(df['feat_interact'].rank(method='first'), q=5, labels=['Q1','Q2','Q3','Q4','Q5'])\nresult = df.groupby('feat_interact_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "The data shows an inverse relationship where higher feat_interact buckets (Q4, Q5) have lower purchase rates, with Q1 having the highest rate (2.36%) and Q5 the lowest (0.68%), contradicting the hypothesis.",
+    "business_insight": "Lower feat_interact values are actually stronger predictors of purchase intent, so the model or targeting strategy should prioritize customers in the lowest feat_interact buckets rather than the highest.",
+    "output": "event_type            purchase_rate\nfeat_interact_bucket               \nQ1                         0.023598\nQ2                         0.018888\nQ3                         0.018437\nQ4                         0.012438\nQ5                         0.006792\n"
+  },
+  {
+    "id": "H10",
+    "statement": "Users with higher 'price_per_product_magnitude' tend to have lower purchase event_type rates, as products with a large price relative to their product magnitude signal outlier pricing that discourages purchase.",
+    "columns": [
+      "price_per_product_magnitude",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['ppm_bucket'] = pd.qcut(df['price_per_product_magnitude'].rank(method='first'), q=5, labels=['Q1','Q2','Q3','Q4','Q5'])\nresult = df.groupby('ppm_bucket')['event_type'].value_counts(normalize=True).unstack()\nresult['purchase_rate'] = result.get('purchase', 0)\nprint(result[['purchase_rate']].sort_index())",
+    "chart_type": "scatter",
+    "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "Purchase rates do not monotonically decrease with higher price_per_product_magnitude buckets; Q3, Q4, and Q5 all show higher rates than Q1 and Q2, with Q3 having the highest rate overall.",
+    "business_insight": "Outlier pricing relative to product magnitude does not discourage purchases, suggesting customers may actually be drawn to uniquely priced products or that price-to-magnitude ratio is not a reliable signal for purchase deterrence.",
+    "output": "event_type  purchase_rate\nppm_bucket               \nQ1               0.014993\nQ2               0.012385\nQ3               0.019017\nQ4               0.016330\nQ5               0.017427\n"
+  }
+]

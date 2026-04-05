@@ -1,16 +1,16 @@
 # Hypothesis Validation
 
-**Target:** `event_type` | TRUE: 2 | FALSE: 5 | INCONCLUSIVE: 3
+**Target:** `event_type` | TRUE: 1 | FALSE: 8 | INCONCLUSIVE: 1
 
 | ID | Hypothesis | Verdict | Business Insight |
 |----|-----------|---------|-----------------|
-| H1 | Higher-priced products are less likely to result in a purchase event compared to | **INCONCLUSIVE** | Price alone is not a reliable predictor of purchase conversion, suggesting other |
-| H2 | Users who interact with more products within a single session (higher feat_sum)  | **FALSE** | Users with extremely high product interactions may be browsing or comparing with |
-| H3 | Certain product categories (category_code) drive disproportionately higher purch | **INCONCLUSIVE** | Non-electronics categories such as fans, belts, and diapers drive the highest co |
-| H4 | Specific brands are associated with higher purchase conversion rates, suggesting | **TRUE** | Marketing efforts should prioritize high-converting brands like uralsport and la |
-| H5 | The time of day embedded in event_time influences event_type distribution, with  | **FALSE** | Marketing and promotional efforts should be targeted at early morning hours (4-8 |
-| H6 | A higher category_price_ratio (product price relative to category average) is ne | **FALSE** | Price relative to category average does not straightforwardly deter purchases, s |
-| H7 | Users with higher user_price_interact values (a proxy for total spend potential) | **INCONCLUSIVE** | Since high-value users do not consistently convert at higher rates, targeted re- |
-| H8 | Users with more events per session (higher feat_ratio) are more likely to purcha | **FALSE** | Users who trigger fewer events per session are actually more likely to convert,  |
-| H9 | The log-transformed price (log_price) shows a stronger linear relationship with  | **TRUE** | Although both correlations are extremely weak in absolute terms, the stronger lo |
-| H10 | The interaction feature feat_interact captures a combined signal from user and p | **FALSE** | The interaction feature does not reliably distinguish purchase intent from brows |
+| H1 | Users with higher 'price' products in their sessions tend to have lower purchase | **FALSE** | Price alone does not deter purchases, and mid-to-high priced products may attrac |
+| H2 | Users with higher 'feat_ratio' (engineered feature) tend to have higher purchase | **FALSE** | Users with lower feat_ratio values are actually stronger purchase intent signals |
+| H3 | Users with higher 'feat_sum' values tend to have higher purchase event_type rate | **FALSE** | Mid-range engaged users (Q2) are the most likely to purchase, suggesting that ve |
+| H4 | Sessions/Events with extreme 'price_zscore_abs' (far from mean price) tend to ha | **FALSE** | Unusually priced items do not systematically deter purchases, suggesting custome |
+| H5 | Events associated with specific 'brand' values tend to have significantly differ | **INCONCLUSIVE** | Oral-b and tyrex show the highest conversion rates among displayed brands, sugge |
+| H6 | Events from specific 'category_code' values tend to have higher purchase event_t | **TRUE** | The business should prioritize marketing spend and inventory optimization for hi |
+| H7 | Users with higher 'user_price_ratio' tend to have higher purchase event_type rat | **FALSE** | Price-to-user-budget alignment does not appear to be a meaningful driver of purc |
+| H8 | Events with higher 'log_price' values tend to have lower purchase event_type rat | **FALSE** | Price alone does not linearly drive conversion behavior, suggesting other factor |
+| H9 | Events with higher 'feat_interact' values tend to have higher purchase event_typ | **FALSE** | Lower feat_interact values are actually stronger predictors of purchase intent,  |
+| H10 | Users with higher 'price_per_product_magnitude' tend to have lower purchase even | **FALSE** | Outlier pricing relative to product magnitude does not discourage purchases, sug |

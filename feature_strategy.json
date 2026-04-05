@@ -1,0 +1,23 @@
+{
+  "standard_features": [
+    "feat_ratio",
+    "feat_sum",
+    "feat_product",
+    "feat_diff",
+    "log_product_id",
+    "log_category_id",
+    "feat_interact",
+    "sq_product_id",
+    "sq_category_id"
+  ],
+  "ai_features": [
+    "price_per_product_magnitude",
+    "user_price_ratio",
+    "price_zscore_abs",
+    "log_price",
+    "price_product_log_interact"
+  ],
+  "boruta_selected": [],
+  "ai_code": "\n# Feature 1: Price relative to a normalized product_id range\n# Products with higher IDs might be newer/more expensive - capture relative price positioning\ndf['price_per_product_magnitude'] = df['price'] / (np.log1p(df['product_id']) + 1)\n\n# Feature 2: User behavior indicator - ratio of user_id to price\n# Higher user IDs (possibly newer users) may interact differently with prices\ndf['user_price_ratio'] = df['user_id'] / (df['price'] + 1)\n\n# Feature 3: Price bucketized relative to mean - deviation from average price\n# Events (view/cart/purchase) often depend on whether item is cheap or expensive\nprice_mean = df['price'].mean()\nprice_std = df['price'].std()\ndf['price_zscore_abs'] = np.abs((df['price'] - price_mean) / (price_std + 1e-9))\n\n# Feature 4: Log of price - purchase events more likely at certain price points (non-linear)\ndf['log_price'] = np.log1p(df['price'])\n\n# Feature 5: Interaction between log_price and log_product_id\n# Captures combined effect of product identity and price on event type\ndf['price_product_log_interact'] = df['log_price'] * np.log1p(df['product_id'])\n",
+  "ai_success": true
+}

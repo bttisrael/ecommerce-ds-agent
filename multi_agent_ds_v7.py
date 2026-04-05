@@ -379,6 +379,9 @@ def analyze_data_with_ai(_: str = "") -> str:
     Saves Quality_Report.md and Intelligent_Analysis.md.
     Returns ANALYSIS_SUCCESS or ERROR. No parameters.
     """
+
+    prompt_analysis = ""
+
     try:
         if not os.path.exists(CONFIG["silver_path"]):
             return "ERROR: df1_silver.parquet does not exist."
@@ -1959,7 +1962,7 @@ and concrete next steps to improve the model. Be specific, not generic."""
 | **Optimized parameters** | `{json.dumps(optuna_params, default=_safe_json)}` |
 | **CV strategy** | {CONFIG['cv_folds']}-fold {'Stratified' if problem_type == 'classification' else ''}KFold + Optuna ({CONFIG['optuna_trials']} trials) + Stacking |
 | **Features used** | {len(boruta_feats) if boruta_feats else len(std_feats) + len(ai_feats)} (Boruta-selected from {len(std_feats) + len(ai_feats)} engineered) |
-| **Dataset** | {silver_shape[0]:,} rows × {silver_shape[1]} columns → {ml_shape[0]:,} rows × {ml_shape[1]} ML-ready |
+| **Dataset** | {silver_shape[0]} rows × {silver_shape[1]} columns → {ml_shape[0]} rows × {ml_shape[1]} ML-ready |
 | **Predictions generated** | {pred_rows} rows in `df4_predictions.parquet` |
 
 ### AI-Identified Target Justification

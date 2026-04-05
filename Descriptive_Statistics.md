@@ -1,13 +1,13 @@
-|        | event_time              | event_type   |       product_id |      category_id | category_code          | brand   |      price |          user_id | user_session                         |
-|:-------|:------------------------|:-------------|-----------------:|-----------------:|:-----------------------|:--------|-----------:|-----------------:|:-------------------------------------|
-| count  | 500000                  | 500000       | 500000           | 500000           | 500000                 | 500000  | 500000     | 500000           | 500000                               |
-| unique | 386238                  | 3            |    nan           |    nan           | 125                    | 2815    |    nan     |    nan           | 446136                               |
-| top    | 2019-11-14 17:48:40 UTC | view         |    nan           |    nan           | electronics.smartphone | samsung |    nan     |    nan           | fc749a4e-c432-4dae-a0a1-04de89f1e4ea |
-| freq   | 8                       | 480453       |    nan           |    nan           | 288442                 | 127627  |    nan     |    nan           | 48                                   |
-| mean   | nan                     | nan          |      1.12317e+07 |      2.05782e+18 | nan                    | nan     |    295.545 |      5.37071e+08 | nan                                  |
-| std    | nan                     | nan          |      1.33144e+07 |      1.95853e+16 | nan                    | nan     |    355.137 |      2.17207e+07 | nan                                  |
-| min    | nan                     | nan          |      1.00098e+06 |      2.05301e+18 | nan                    | nan     |      0     |      6.23361e+07 | nan                                  |
-| 25%    | nan                     | nan          |      1.00526e+06 |      2.05301e+18 | nan                    | nan     |     69.24  |      5.16286e+08 | nan                                  |
-| 50%    | nan                     | nan          |      5.10055e+06 |      2.05301e+18 | nan                    | nan     |    167.57  |      5.3315e+08  | nan                                  |
-| 75%    | nan                     | nan          |      1.68e+07    |      2.05301e+18 | nan                    | nan     |    372.47  |      5.58552e+08 | nan                                  |
-| max    | nan                     | nan          |      1.00012e+08 |      2.18074e+18 | nan                    | nan     |   2574.07  |      5.716e+08   | nan                                  |
+|        | event_time              | event_type   |    product_id |   category_id | category_code          | brand   |    price |       user_id | user_session                         |
+|:-------|:------------------------|:-------------|--------------:|--------------:|:-----------------------|:--------|---------:|--------------:|:-------------------------------------|
+| count  | 2000000                 | 2000000      |   2e+06       |   2e+06       | 2000000                | 2000000 |    2e+06 |   2e+06       | 2000000                              |
+| unique | 119330                  | 3            | nan           | nan           | 123                    | 2920    |  nan     | nan           | 451259                               |
+| top    | 2019-11-01 14:18:02 UTC | view         | nan           | nan           | electronics.smartphone | samsung |  nan     | nan           | 4488e77a-9901-4c4b-b162-47a224ceab51 |
+| freq   | 96                      | 1940477      | nan           | nan           | 1166194                | 537308  |  nan     | nan           | 504                                  |
+| mean   | nan                     | nan          |   1.07371e+07 |   2.05762e+18 | nan                    | nan     |  292.2   |   5.35301e+08 | nan                                  |
+| std    | nan                     | nan          |   1.20425e+07 |   1.90315e+16 | nan                    | nan     |  348.577 |   2.01833e+07 | nan                                  |
+| min    | nan                     | nan          |   1.00098e+06 |   2.05301e+18 | nan                    | nan     |    0     |   2.74969e+08 | nan                                  |
+| 25%    | nan                     | nan          |   1.00522e+06 |   2.05301e+18 | nan                    | nan     |   69.47  |   5.15944e+08 | nan                                  |
+| 50%    | nan                     | nan          |   5.10038e+06 |   2.05301e+18 | nan                    | nan     |  170.14  |   5.30941e+08 | nan                                  |
+| 75%    | nan                     | nan          |   1.59002e+07 |   2.05301e+18 | nan                    | nan     |  361.64  |   5.54692e+08 | nan                                  |
+| max    | nan                     | nan          |   6.17e+07    |   2.18074e+18 | nan                    | nan     | 2574.07  |   5.66728e+08 | nan                                  |
