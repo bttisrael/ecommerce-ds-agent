@@ -3322,12 +3322,14 @@ def deploy_to_oracle_cloud(_: str = "") -> str:
                     f"Check VM logs: sudo journalctl -u telegram-bot -n 30\n"
                     f"Log:\n{summary}")
  
-    except paramiko.AuthenticationException:
-        return f"ORACLE_DEPLOY_ERROR: SSH authentication failed. Check ORACLE_KEY_PATH."
-    except paramiko.NoValidConnectionsError:
-        return f"ORACLE_DEPLOY_ERROR: Could not connect to {vm_ip}. Check ORACLE_VM_IP and VM status."
     except Exception as e:
-        return f"ORACLE_DEPLOY_ERROR: {e}\n{traceback.format_exc()}"
+        err_str = str(e)
+        if "Authentication" in err_str or "publickey" in err_str:
+            return f"ORACLE_DEPLOY_ERROR: SSH authentication failed. Check ORACLE_KEY_PATH. Detail: {e}"
+        elif "Unable to connect" in err_str or "Connection refused" in err_str or "timed out" in err_str:
+            return f"ORACLE_DEPLOY_ERROR: Could not connect to {vm_ip}. Check VM is running. Detail: {e}"
+        else:
+            return f"ORACLE_DEPLOY_ERROR: {e}\n{traceback.format_exc()}"
 
 # ── STEP 9: A/B Testing ───────────────────────────────────────────────────────
 
@@ -3672,23 +3674,28 @@ def build_recommendation_system(_: str = "") -> str:
         df_ml   = df_ml.dropna(axis=1, how="all")
 
         n_rows = len(df_ml)
-        TOP_N  = 5   # recommendations per entity
+        TOP_N  = 5
 
-        # ── Detect strategy ────────────────────────────────────────────────────
+        # ── Detect strategy ───────────────────────────────────────────────────
         all_cols_lower = {c.lower(): c for c in df_ml.columns}
 
-        user_col  = next((all_cols_lower[k] for k in all_cols_lower
-                          if any(w in k for w in ["customer", "user", "client", "buyer"])), None)
-        item_col  = next((all_cols_lower[k] for k in all_cols_lower
-                          if any(w in k for w in ["product", "item", "sku", "category",
-                                                   "order_item", "department"])), None)
+        user_col = next((all_cols_lower[k] for k in all_cols_lower
+                         if any(w in k for w in ["customer", "user", "client", "buyer"])), None)
+        item_col = next((all_cols_lower[k] for k in all_cols_lower
+                         if any(w in k for w in ["product", "item", "sku", "category",
+                                                  "order_item", "department"])), None)
         rating_col = next((all_cols_lower[k] for k in all_cols_lower
                            if any(w in k for w in ["rating", "score", "sales",
                                                     "quantity", "amount", "profit"])), None)
 
-        use_collab = (user_col and item_col and rating_col and
-                      df_ml[user_col].nunique() <= 5000 and
-                      df_ml[item_col].nunique() <= 2000)
+        # [FIX] All three columns must be distinct — prevents same column
+        # being used as both user and rating, which breaks pivot_table.
+        use_collab = (
+            user_col and item_col and rating_col and
+            len({user_col, item_col, rating_col}) == 3 and
+            df_ml[user_col].nunique() <= 5000 and
+            df_ml[item_col].nunique() <= 2000
+        )
 
         strategy = "collaborative" if use_collab else "content_based"
         logger.info(f"[Reco] Strategy: {strategy} | "
@@ -3696,99 +3703,95 @@ def build_recommendation_system(_: str = "") -> str:
 
         reco_df = None
 
-        # ══ STRATEGY A: Collaborative Filtering via truncated SVD ═════════════
+        # ══ STRATEGY A: Collaborative Filtering via truncated SVD ════════════
         if strategy == "collaborative":
             from sklearn.preprocessing import normalize
             from sklearn.decomposition import TruncatedSVD
+            try:
+                ui = df_ml.pivot_table(index=user_col, columns=item_col,
+                                       values=rating_col, aggfunc="mean", fill_value=0)
+                logger.info(f"[Reco] User-item matrix: {ui.shape}")
 
-            # Build user-item matrix
-            ui = df_ml.pivot_table(index=user_col, columns=item_col,
-                                   values=rating_col, aggfunc="mean", fill_value=0)
-            logger.info(f"[Reco] User-item matrix: {ui.shape}")
+                users = list(ui.index)
+                items = list(ui.columns)
+                R     = ui.values.astype(float)
 
-            users = list(ui.index)
-            items = list(ui.columns)
-            R     = ui.values.astype(float)
+                R_norm = normalize(R, norm="l2")
 
-            # Normalise rows (user vectors)
-            R_norm = normalize(R, norm="l2")
+                k   = min(20, min(R.shape) - 1)
+                svd = TruncatedSVD(n_components=k, random_state=CONFIG["random_state"])
+                U   = svd.fit_transform(R_norm)
+                Vt  = svd.components_
+                R_hat = U @ Vt
 
-            # Truncated SVD — k latent factors
-            k = min(20, min(R.shape) - 1)
-            svd   = TruncatedSVD(n_components=k, random_state=CONFIG["random_state"])
-            U     = svd.fit_transform(R_norm)          # (users × k)
-            Vt    = svd.components_                    # (k × items)
-            R_hat = U @ Vt                             # reconstructed scores
+                records = []
+                for u_idx, user in enumerate(users):
+                    seen = set(np.where(R[u_idx] > 0)[0])
+                    scores = [(items[i_idx], float(R_hat[u_idx, i_idx]))
+                              for i_idx in range(len(items)) if i_idx not in seen]
+                    scores.sort(key=lambda x: x[1], reverse=True)
+                    for rank, (item, score) in enumerate(scores[:TOP_N], 1):
+                        records.append({
+                            user_col:               user,
+                            "recommended_item":     item,
+                            "predicted_score":      round(score, 4),
+                            "rank":                 rank,
+                            "strategy":             "collaborative_svd",
+                        })
 
-            # Build recommendation table
-            records = []
-            for u_idx, user in enumerate(users):
-                # Items the user has already interacted with (rating > 0)
-                seen = set(np.where(R[u_idx] > 0)[0])
-                scores = [(items[i_idx], float(R_hat[u_idx, i_idx]))
-                          for i_idx in range(len(items)) if i_idx not in seen]
-                scores.sort(key=lambda x: x[1], reverse=True)
-                for rank, (item, score) in enumerate(scores[:TOP_N], 1):
-                    records.append({
-                        user_col:       user,
-                        "recommended_item": item,
-                        "predicted_score":  round(score, 4),
-                        "rank":             rank,
-                        "strategy":         "collaborative_svd",
-                    })
+                reco_df = pd.DataFrame(records)
 
-            reco_df = pd.DataFrame(records)
+                top_items = (reco_df[reco_df["rank"] == 1]
+                             .groupby("recommended_item")
+                             .size().sort_values(ascending=False).head(10))
+                fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+                fig.suptitle("Collaborative Filtering — Recommendation System",
+                             fontsize=13, fontweight="bold")
+                axes[0].barh(top_items.index.astype(str)[::-1],
+                             top_items.values[::-1], color="#4C72B0", alpha=0.85)
+                axes[0].set_title("Top 10 Most Recommended Items (rank 1)")
+                axes[0].set_xlabel("Times Recommended")
+                axes[0].grid(axis="x", alpha=0.3)
+                score_dist = reco_df["predicted_score"]
+                axes[1].hist(score_dist, bins=40, color="#2CA02C",
+                             edgecolor="white", alpha=0.85)
+                axes[1].set_title("Distribution of Predicted Scores")
+                axes[1].set_xlabel("Predicted Score")
+                axes[1].grid(axis="y", alpha=0.3)
+                plt.tight_layout()
+                plt.savefig(CONFIG["reco_png"], dpi=150)
+                plt.close()
 
-            # ── Chart: top-10 most recommended items ──────────────────────────
-            top_items = (reco_df[reco_df["rank"] == 1]
-                         .groupby("recommended_item")
-                         .size().sort_values(ascending=False).head(10))
-            fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-            fig.suptitle("Collaborative Filtering — Recommendation System",
-                         fontsize=13, fontweight="bold")
+            except Exception as pivot_err:
+                logger.warning(
+                    f"[Reco] Collaborative failed ({pivot_err}). "
+                    f"Switching to content-based."
+                )
+                strategy = "content_based"
 
-            axes[0].barh(top_items.index.astype(str)[::-1],
-                         top_items.values[::-1], color="#4C72B0", alpha=0.85)
-            axes[0].set_title("Top 10 Most Recommended Items (rank 1)")
-            axes[0].set_xlabel("Times Recommended")
-            axes[0].grid(axis="x", alpha=0.3)
-
-            score_dist = reco_df["predicted_score"]
-            axes[1].hist(score_dist, bins=40, color="#2CA02C",
-                         edgecolor="white", alpha=0.85)
-            axes[1].set_title("Distribution of Predicted Scores")
-            axes[1].set_xlabel("Predicted Score")
-            axes[1].grid(axis="y", alpha=0.3)
-
-            plt.tight_layout()
-            plt.savefig(CONFIG["reco_png"], dpi=150)
-            plt.close()
-
-        # ══ STRATEGY B: Content-Based via Cosine Similarity ═══════════════════
-        else:
+        # ══ STRATEGY B: Content-Based via Cosine Similarity ══════════════════
+        # Note: uses "if" not "else" so the fallback from Strategy A works.
+        if strategy == "content_based":
             from sklearn.preprocessing import StandardScaler
             from sklearn.metrics.pairwise import cosine_similarity
 
-            # Use numeric ML features only
             feat_cols = [c for c in df_ml.columns
                          if c != target_col and c != "_src_idx"
                          and df_ml[c].dtype in ["float64", "int64", "float32", "int32"]]
-            feat_cols = feat_cols[:50]   # cap to avoid memory issues
+            feat_cols = feat_cols[:50]
 
             X_raw = df_ml[feat_cols].fillna(0).values.astype(float)
             X_sc  = StandardScaler().fit_transform(X_raw)
 
-            # Subsample for large datasets — cosine_similarity is O(n²)
             max_sample = min(n_rows, 3_000)
             rng        = np.random.default_rng(CONFIG["random_state"])
             sample_idx = rng.choice(n_rows, size=max_sample, replace=False)
             sample_idx = np.sort(sample_idx)
 
             X_sample   = X_sc[sample_idx]
-            sim_matrix  = cosine_similarity(X_sample)   # (sample × sample)
-            np.fill_diagonal(sim_matrix, -1)             # exclude self
+            sim_matrix = cosine_similarity(X_sample)
+            np.fill_diagonal(sim_matrix, -1)
 
-            # Positive prediction mask (recommend only rows with good predictions)
             if "prediction" in df_pred.columns:
                 pred_vals = df_pred["prediction"].values
                 try:
@@ -3804,7 +3807,6 @@ def build_recommendation_system(_: str = "") -> str:
             records = []
             for i in range(max_sample):
                 row_sim = sim_matrix[i].copy()
-                # Prefer positive-prediction neighbours
                 row_sim[~pos_mask_sample] *= 0.5
                 top_idx = np.argsort(row_sim)[::-1][:TOP_N]
                 orig_i  = int(sample_idx[i])
@@ -3812,45 +3814,43 @@ def build_recommendation_system(_: str = "") -> str:
                 for rank, j in enumerate(top_idx, 1):
                     orig_j = int(sample_idx[j])
                     records.append({
-                        "entity_idx":     orig_i,
-                        "recommended_idx":orig_j,
-                        "similarity":     round(float(sim_matrix[i, j]), 4),
-                        "rank":           rank,
-                        "rec_prediction": str(df_pred["prediction"].iloc[orig_j])
-                                          if "prediction" in df_pred.columns else "N/A",
-                        "strategy":       "content_based_cosine",
+                        "entity_idx":      orig_i,
+                        "recommended_idx": orig_j,
+                        "similarity":      round(float(sim_matrix[i, j]), 4),
+                        "rank":            rank,
+                        "rec_prediction":  str(df_pred["prediction"].iloc[orig_j])
+                                           if "prediction" in df_pred.columns else "N/A",
+                        "strategy":        "content_based_cosine",
                     })
                     if rank == 1:
-                        break   # keep table lean; extend to TOP_N if needed
+                        break
 
             reco_df = pd.DataFrame(records)
 
-            # ── Chart: similarity distribution + top feature importance ────────
             fig, axes = plt.subplots(1, 2, figsize=(16, 6))
             fig.suptitle("Content-Based Recommendation System — Cosine Similarity",
                          fontsize=13, fontweight="bold")
-
             axes[0].hist(reco_df["similarity"], bins=40,
                          color="#4C72B0", edgecolor="white", alpha=0.85)
             axes[0].set_title("Distribution of Similarity Scores (rank 1)")
-            axes[0].set_xlabel("Cosine Similarity"); axes[0].set_ylabel("Count")
+            axes[0].set_xlabel("Cosine Similarity")
+            axes[0].set_ylabel("Count")
             axes[0].grid(axis="y", alpha=0.3)
-
-            # Feature variance as proxy for importance in similarity space
-            feat_var = pd.Series(X_sample.var(axis=0), index=feat_cols).sort_values(ascending=True).tail(10)
+            feat_var = (pd.Series(X_sample.var(axis=0), index=feat_cols)
+                        .sort_values(ascending=True).tail(10))
             axes[1].barh(feat_var.index, feat_var.values, color="#FF7F0E", alpha=0.85)
-            axes[1].set_title("Top 10 Features Driving Similarity\n(highest variance in feature space)")
+            axes[1].set_title("Top 10 Features Driving Similarity\n"
+                              "(highest variance in feature space)")
             axes[1].grid(axis="x", alpha=0.3)
-
             plt.tight_layout()
             plt.savefig(CONFIG["reco_png"], dpi=150)
             plt.close()
 
-        # ── Save recommendations parquet ───────────────────────────────────────
+        # ── Save recommendations parquet ──────────────────────────────────────
         reco_df.to_parquet(CONFIG["reco_path"], index=False)
         logger.info(f"[Reco] Saved {len(reco_df)} recommendations → df6_recommendations.parquet")
 
-        # ── Sample for Claude context ──────────────────────────────────────────
+        # ── Sample for Claude context ─────────────────────────────────────────
         sample_reco = reco_df.head(10).to_dict(orient="records")
 
         prompt_reco = f"""You are a senior Data Scientist explaining a recommendation system to business stakeholders.
@@ -3871,7 +3871,7 @@ Be specific and practical. Avoid generic statements."""
 
         interpretation = _ask_claude(prompt_reco, max_tokens=700)
 
-        # ── Save markdown report ───────────────────────────────────────────────
+        # ── Save markdown report ──────────────────────────────────────────────
         report = f"""# Recommendation System Report
 
 **Strategy:** {strategy.replace('_', ' ').title()}
@@ -3886,11 +3886,10 @@ Be specific and practical. Avoid generic statements."""
 {"- User column: `" + str(user_col) + "`" if user_col else ""}
 {"- Item column: `" + str(item_col) + "`" if item_col else ""}
 {"- Rating column: `" + str(rating_col) + "`" if rating_col else ""}
-{"- Latent factors: 20 (TruncatedSVD)" if strategy == "collaborative" else "- Features used: " + str(len(feat_cols) if strategy == "content_based" else 0)}
+{"- Latent factors: 20 (TruncatedSVD)" if strategy == "collaborative" else "- Features used: " + str(len(feat_cols))}
 {"- Sampled rows: " + str(min(n_rows, 3000)) + " of " + str(n_rows) if strategy == "content_based" else ""}
 
 ## Sample Recommendations
-
 ```json
 {json.dumps(sample_reco[:5], indent=2, default=_safe_json)}
 ```
@@ -3903,7 +3902,6 @@ Be specific and practical. Avoid generic statements."""
 {interpretation}
 
 ## How to Use
-
 ```python
 import pandas as pd
 reco = pd.read_parquet('df6_recommendations.parquet')
@@ -4476,11 +4474,25 @@ def run_post_pipeline():
 # ==========================================
 
 if __name__ == "__main__":
+    # ── Clean stale artifacts from previous runs ──────────────────────────────
+    def _clean_previous_run():
+        stale_files = [
+            CONFIG["silver_path"], CONFIG["gold_path"], CONFIG["ml_ready_path"],
+            CONFIG["predictions_path"], CONFIG["target_json"], CONFIG["strategy_json"],
+            CONFIG["model_pkl"], CONFIG["hypothesis_json"], CONFIG["scenarios_path"],
+            CONFIG["ab_test_json"], CONFIG["reco_path"],
+        ]
+        for f in stale_files:
+            if os.path.exists(f):
+                os.remove(f)
+                logger.info(f"[Cleanup] Removed stale file: {os.path.basename(f)}")
+        logger.info("[Cleanup] Previous run artifacts cleared.")
+    _clean_previous_run()
+
     logger.info("Auto Data Scientist v7.1 starting...")
 
     if not os.getenv("ANTHROPIC_API_KEY"):
-        logger.error("ANTHROPIC_API_KEY not found in .env. "
-                     "Add: ANTHROPIC_API_KEY=sk-ant-...")
+        logger.error("ANTHROPIC_API_KEY not found in .env.")
         sys.exit(1)
 
     if not os.path.exists(".env"):
@@ -4490,11 +4502,9 @@ if __name__ == "__main__":
         logger.info("Tip: create business_context.txt to provide business context.")
 
     result = ds_squad.kickoff()
-
     print("\n" + "=" * 60)
     print("PIPELINE RESULT")
     print("=" * 60)
     print(result)
-
     run_post_pipeline()
     logger.info("Pipeline v7.1 finished.")

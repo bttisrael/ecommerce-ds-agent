@@ -1,153 +1,156 @@
 [
   {
     "id": "H1",
-    "statement": "Orders where days_for_shipping_real exceeds days_for_shipment_scheduled tend to have higher late_delivery_risk, as actual shipping time surpassing the scheduled window is a direct indicator of lateness.",
+    "statement": "Higher-priced products are less likely to result in a purchase event compared to lower-priced products, as price sensitivity creates a barrier to conversion.",
     "columns": [
-      "days_for_shipping_real",
-      "days_for_shipment_scheduled",
-      "late_delivery_risk"
+      "price",
+      "event_type"
     ],
-    "test_code": "df['shipping_delay'] = df['days_for_shipping_real'] - df['days_for_shipment_scheduled']\nresult = df.groupby('late_delivery_risk')['shipping_delay'].mean()\nprint(result)\ncorr = df['shipping_delay'].corr(df['late_delivery_risk'])\nprint(f'Correlation: {corr:.4f}')",
-    "chart_type": "box",
-    "expected_direction": "positive",
-    "verdict": "TRUE",
-    "reason": "The strong correlation of 0.78 and the stark difference in mean shipping delay between on-time orders (-0.71) and late-delivery-risk orders (1.62) confirms that exceeding the scheduled shipping window is a direct predictor of late delivery risk.",
-    "business_insight": "Orders that take longer than their scheduled shipping window are highly likely to be flagged as late delivery risks, so proactively monitoring and expediting orders approaching their shipping deadline could significantly reduce late deliveries.",
-    "output": "late_delivery_risk\n0.0   -0.711584\n1.0    1.618184\nName: shipping_delay, dtype: float64\nCorrelation: 0.7776\n"
+    "test_code": "import pandas as pd\nprice_bins = pd.cut(df['price'], bins=10)\nresult = df.groupby(price_bins)['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\nprint(result)",
+    "chart_type": "bar",
+    "expected_direction": "negative",
+    "verdict": "INCONCLUSIVE",
+    "reason": "Purchase rates show no consistent downward trend with price, fluctuating irregularly across bins with mid-range prices ($1287-$1801) actually showing higher conversion than lower price points.",
+    "business_insight": "Price alone is not a reliable predictor of purchase conversion, suggesting other factors like product category, demand, or customer segment may be more influential in driving purchase decisions.",
+    "output": "event_type            purchase_rate\nprice                              \n(-2.574, 257.407]          0.013428\n(257.407, 514.814]         0.011071\n(514.814, 772.221]         0.012220\n(772.221, 1029.628]        0.015578\n(1029.628, 1287.035]       0.008765\n(1287.035, 1544.442]       0.017970\n(1544.442, 1801.849]       0.020333\n(1801.849, 2059.256]       0.004824\n(2059.256, 2316.663]       0.000000\n(2316.663, 2574.07]        0.001376\n"
   },
   {
     "id": "H2",
-    "statement": "Orders with a higher days_for_shipping_real tend to have higher late_delivery_risk, since longer actual shipping durations are more likely to breach scheduled delivery windows.",
+    "statement": "Users who interact with more products within a single session (higher feat_sum) are more likely to convert to a purchase, indicating higher purchase intent.",
     "columns": [
-      "days_for_shipping_real",
-      "late_delivery_risk"
+      "feat_sum",
+      "event_type"
     ],
-    "test_code": "df['shipping_real_bin'] = pd.cut(df['days_for_shipping_real'], bins=5)\nresult = df.groupby('shipping_real_bin')['late_delivery_risk'].mean().sort_index()\nprint(result)",
-    "chart_type": "bar",
+    "test_code": "import pandas as pd\nfeat_bins = pd.qcut(df['feat_sum'], q=5, duplicates='drop')\nresult = df.groupby(feat_bins)['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\nprint(result)",
+    "chart_type": "line",
     "expected_direction": "positive",
     "verdict": "FALSE",
-    "reason": "Late delivery risk does not monotonically increase with shipping days; instead it follows a non-linear pattern where mid-range bins (2.4\u20134.8 days) have lower risk (~23-24%) than the lowest bins (~46-47%), and only the highest bin (4.8-6.0 days) shows very high risk (~96%).",
-    "business_insight": "The business should focus monitoring efforts on orders expected to ship in the 4.8-6.0 day range, as these are nearly certain to be late, while also investigating why very short shipping durations (under 2.4 days) still carry a ~46% late delivery risk.",
-    "output": "shipping_real_bin\n(-0.006, 1.2]    0.457430\n(1.2, 2.4]       0.468279\n(2.4, 3.6]       0.234973\n(3.6, 4.8]       0.237050\n(4.8, 6.0]       0.957916\nName: late_delivery_risk, dtype: float64\n"
+    "reason": "The data shows a declining purchase rate as feat_sum increases, with the highest conversion (2.1%) in the second bin and dropping to 0.6% in the highest bin, contradicting the hypothesis.",
+    "business_insight": "Users with extremely high product interactions may be browsing or comparing without intent to buy, suggesting targeted interventions for mid-range engagers could maximize conversion rates.",
+    "output": "event_type                                        purchase_rate\nfeat_sum                                                       \n(2.0530135522347077e+18, 2.0530135546367506e+18]       0.013654\n(2.0530135546367506e+18, 2.0530135556328876e+18]       0.021168\n(2.0530135556328876e+18, 2.0530135586880591e+18]       0.013678\n(2.0530135586880591e+18, 2.0530135638143775e+18]       0.008888\n(2.0530135638143775e+18, 2.180736567112761e+18]        0.006355\n"
   },
   {
     "id": "H3",
-    "statement": "Orders with a lower days_for_shipment_scheduled tend to have higher late_delivery_risk, as tighter scheduled windows leave less buffer and increase the chance of missing the deadline.",
+    "statement": "Certain product categories (category_code) drive disproportionately higher purchase rates, with electronics or high-demand categories showing the highest conversion.",
     "columns": [
-      "days_for_shipment_scheduled",
-      "late_delivery_risk"
+      "category_code",
+      "event_type"
     ],
-    "test_code": "df['scheduled_bin'] = pd.cut(df['days_for_shipment_scheduled'], bins=5)\nresult = df.groupby('scheduled_bin')['late_delivery_risk'].mean().sort_index()\nprint(result)\ncorr = df['days_for_shipment_scheduled'].corr(df['late_delivery_risk'])\nprint(f'Correlation: {corr:.4f}')",
-    "chart_type": "bar",
-    "expected_direction": "negative",
-    "verdict": "FALSE",
-    "reason": "The data shows a non-monotonic relationship where the lowest bin (0-0.8 days) has a moderate risk of 0.46 while the second bin (0.8-1.6 days) has the highest risk of 0.95, and the highest scheduled days bin (3.2-4.0) has the lowest risk of 0.38, with a weak negative correlation of -0.37 that does not support a consistent inverse relationship.",
-    "business_insight": "Shipments scheduled with very tight windows (around 0.8-1.6 days) pose the greatest late delivery risk, suggesting the business should focus logistics resources on that specific scheduling tier rather than broadly assuming shorter schedules always mean higher risk.",
-    "output": "scheduled_bin\n(-0.004, 0.8]    0.457430\n(0.8, 1.6]       0.953225\n(1.6, 2.4]       0.766328\n(2.4, 3.2]            NaN\n(3.2, 4.0]       0.380717\nName: late_delivery_risk, dtype: float64\nCorrelation: -0.3694\n"
-  },
-  {
-    "id": "H4",
-    "statement": "Orders shipped to certain markets (e.g., LATAM or Africa) tend to have higher late_delivery_risk compared to orders in markets like Europe or Pacific Asia, due to longer and more complex logistics chains.",
-    "columns": [
-      "market",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('market')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result)",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "FALSE",
-    "reason": "Late delivery risk rates are nearly identical across all markets (ranging only from 54.4% to 55.2%), with Europe and Pacific Asia actually showing the highest rates, directly contradicting the hypothesis that LATAM and Africa would have higher risk.",
-    "business_insight": "Since late delivery risk is uniformly high (~55%) across all markets, the root cause is likely systemic in operations or data labeling rather than region-specific logistics complexity, requiring a company-wide solution rather than targeted regional improvements.",
-    "output": "              late_risk_rate  order_count\nmarket                                   \nEurope              0.552078        50252\nPacific Asia        0.550460        41260\nUSCA                0.548006        25799\nAfrica              0.545893        11614\nLATAM               0.543552        51594\n"
-  },
-  {
-    "id": "H5",
-    "statement": "Orders belonging to certain order types (e.g., 'DEBIT' or 'TRANSFER') tend to have higher late_delivery_risk compared to types like 'CASH', possibly due to payment processing delays affecting fulfillment start times.",
-    "columns": [
-      "type",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('type')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result)",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "FALSE",
-    "reason": "DEBIT and TRANSFER do not consistently show higher late delivery risk; DEBIT is slightly above average but TRANSFER has the lowest rate (48.5%), and CASH is comparable to PAYMENT and DEBIT, contradicting the hypothesized pattern.",
-    "business_insight": "Since TRANSFER orders actually have the lowest late delivery risk, payment type is not a reliable predictor of fulfillment delays, and the business should investigate other factors driving the ~57% late delivery rate across most order types.",
-    "output": "          late_risk_rate  order_count\ntype                                 \nPAYMENT         0.575291        41725\nDEBIT           0.572177        69295\nCASH            0.566323        19616\nTRANSFER        0.485436        49883\n"
-  },
-  {
-    "id": "H6",
-    "statement": "Orders from certain department_names (e.g., large/heavy item departments like 'Outdoors' or 'Fitness') tend to have higher late_delivery_risk due to more complex handling and shipping requirements.",
-    "columns": [
-      "department_name",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('department_name')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result.head(10))",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "FALSE",
-    "reason": "Outdoors and Fitness do have relatively high late delivery risk rates (~55%), but they are not the highest \u2014 Pet Shop, Book Shop, and Health and Beauty all show higher rates, indicating department type alone does not predict late delivery risk as hypothesized.",
-    "business_insight": "Late delivery risk is fairly uniform across all departments (ranging only from ~54.7% to ~58.9%), suggesting the issue is systemic across the supply chain rather than specific to heavy or complex-item departments, and therefore requires a company-wide logistics intervention rather than department-targeted solutions.",
-    "output": "                    late_risk_rate  order_count\ndepartment_name                                \nPet Shop                  0.589431          492\nBook Shop                 0.565432          405\nHealth and Beauty         0.558011          362\nFitness                   0.555466         2479\nOutdoors                  0.554925         9686\nTechnology                0.550171         1465\nGolf                      0.547803        33220\nFan Shop                  0.547748        66861\nApparel             "
-  },
-  {
-    "id": "H7",
-    "statement": "Orders placed by customers in certain customer_segments (e.g., 'Consumer' vs 'Corporate') tend to have higher late_delivery_risk, as fulfillment prioritization may differ by segment.",
-    "columns": [
-      "customer_segment",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('customer_segment')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result)",
-    "chart_type": "bar",
-    "expected_direction": "positive",
-    "verdict": "FALSE",
-    "reason": "The late delivery risk rates across all three customer segments are virtually identical (ranging only from 54.72% to 55.07%), indicating no meaningful difference in fulfillment prioritization by segment.",
-    "business_insight": "Since late delivery risk is uniformly high (~55%) across all customer segments, the fulfillment problem is systemic and not segment-specific, requiring a broad operational fix rather than a targeted segment-level intervention.",
-    "output": "                  late_risk_rate  order_count\ncustomer_segment                             \nHome Office             0.550704        32226\nConsumer                0.548084        93504\nCorporate               0.547227        54789\n"
-  },
-  {
-    "id": "H8",
-    "statement": "Orders shipped to distant or remote order_countries tend to have higher late_delivery_risk, as international or cross-border logistics introduce more variability and delay risk.",
-    "columns": [
-      "order_country",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('order_country')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).sort_values('late_risk_rate', ascending=False)\nprint(result.head(15))",
+    "test_code": "import pandas as pd\nresult = df.groupby('category_code')['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\n    result = result.sort_values('purchase_rate', ascending=False)\nprint(result.head(15))",
     "chart_type": "bar",
     "expected_direction": "positive",
     "verdict": "INCONCLUSIVE",
-    "reason": "While some distant/remote countries show high late delivery rates, the top results include small sample sizes (2-10 orders) making it statistically unreliable, and without comparing to domestic or nearby countries' rates, we cannot confirm distance is the driving factor.",
-    "business_insight": "The business should investigate logistics partnerships and fulfillment strategies for consistently high-risk countries like Bhutan, Armenia, and Luxembourg, but should collect more order volume before drawing definitive conclusions about distance-based delivery risk.",
-    "output": "                     late_risk_rate  order_count\norder_country                                   \nBut\u00e1n                      1.000000            5\nArmenia                    1.000000            5\nGuinea Ecuatorial          1.000000            2\nEritrea                    1.000000            2\nRep\u00fablica de Gambia        1.000000            5\nS\u00e1hara Occidental          1.000000            2\nSud\u00e1n del Sur              1.000000            5\nSuazilandia                1.000000            5\nLaos      "
+    "reason": "While certain categories like appliances.environment.fan (5%) and apparel.belt (3.4%) show disproportionately higher purchase rates, electronics categories like smartphones (1.6%) and headphones (2%) do not dominate the top rankings as hypothesized.",
+    "business_insight": "Non-electronics categories such as fans, belts, and diapers drive the highest conversion rates, suggesting marketing and inventory prioritization should extend beyond electronics to these high-converting niche categories.",
+    "output": "event_type                         purchase_rate\ncategory_code                                   \nappliances.environment.fan              0.050000\napparel.belt                            0.034483\nstationery.cartrige                     0.030303\nkids.fmcg.diapers                       0.020661\nelectronics.audio.headphone             0.020555\napparel.shoes.slipons                   0.018519\nappliances.kitchen.toster               0.017937\nappliances.personal.scales              0.017341\nappliances"
   },
   {
-    "id": "H9",
-    "statement": "Orders with lower benefit_per_order tend to have higher late_delivery_risk, as low-margin orders may receive lower fulfillment priority, leading to delayed processing and shipping.",
+    "id": "H4",
+    "statement": "Specific brands are associated with higher purchase conversion rates, suggesting brand loyalty and trust play a significant role in the purchase decision.",
     "columns": [
-      "benefit_per_order",
-      "late_delivery_risk"
+      "brand",
+      "event_type"
     ],
-    "test_code": "df['benefit_bin'] = pd.qcut(df['benefit_per_order'], q=5, duplicates='drop', labels=['Q1_lowest', 'Q2', 'Q3', 'Q4', 'Q5_highest'])\nresult = df.groupby('benefit_bin')['late_delivery_risk'].mean().sort_index()\nprint(result)\ncorr = df['benefit_per_order'].corr(df['late_delivery_risk'])\nprint(f'Correlation: {corr:.4f}')",
-    "chart_type": "bar",
-    "expected_direction": "negative",
-    "verdict": "FALSE",
-    "reason": "Late delivery risk is nearly identical across all benefit quintiles (ranging only from 0.545 to 0.552) and the correlation is virtually zero (-0.0037), indicating no meaningful relationship between order margin and delivery risk.",
-    "business_insight": "Fulfillment and delivery delays appear to be driven by operational or logistical factors rather than order profitability, suggesting the business does not (intentionally or unintentionally) prioritize high-margin orders in its shipping process.",
-    "output": "benefit_bin\nQ1_lowest     0.549115\nQ2            0.552245\nQ3            0.544820\nQ4            0.549105\nQ5_highest    0.546167\nName: late_delivery_risk, dtype: float64\nCorrelation: -0.0037\n"
-  },
-  {
-    "id": "H10",
-    "statement": "Orders placed in certain category_names (e.g., bulky or high-volume categories) tend to have higher late_delivery_risk, as category-specific logistics complexity and demand spikes can disrupt on-time delivery.",
-    "columns": [
-      "category_name",
-      "late_delivery_risk"
-    ],
-    "test_code": "result = df.groupby('category_name')['late_delivery_risk'].agg(['mean', 'count']).rename(columns={'mean': 'late_risk_rate', 'count': 'order_count'}).query('order_count >= 50').sort_values('late_risk_rate', ascending=False)\nprint(result.head(15))",
+    "test_code": "import pandas as pd\nresult = df.groupby('brand')['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\n    result = result.sort_values('purchase_rate', ascending=False)\nprint(result.head(20))",
     "chart_type": "bar",
     "expected_direction": "positive",
     "verdict": "TRUE",
-    "reason": "Significant variation in late delivery risk across categories is confirmed, with rates ranging notably high (56-69%) in categories like Golf Bags & Carts, Pet Supplies, and Cameras, supporting that category-specific logistics complexity drives late delivery risk.",
-    "business_insight": "The business should prioritize targeted logistics improvements and buffer inventory for high-risk categories like Golf Bags & Carts, Pet Supplies, and Cameras to reduce late deliveries and improve customer satisfaction in these segments.",
-    "output": "                     late_risk_rate  order_count\ncategory_name                                   \nGolf Bags & Carts          0.688525           61\nLacrosse                   0.600583          343\nPet Supplies               0.589431          492\nCameras                    0.581081          592\nStrength Training          0.576577          111\nAs Seen on  TV!            0.573529           68\nMusic                      0.571429          434\nAccessories                0.569663         1780\nFitness Ac"
+    "reason": "The data shows significant variation in purchase rates across brands, with some brands like uralsport and larocheposay achieving 100% conversion while others like a-mega achieve only 14.3%, confirming brand-specific differences in purchase behavior.",
+    "business_insight": "Marketing efforts should prioritize high-converting brands like uralsport and larocheposay while investigating and addressing the factors limiting conversion for lower-performing brands to optimize overall revenue.",
+    "output": "event_type      purchase_rate\nbrand                        \nuralsport            1.000000\nlarocheposay         1.000000\nrochas               0.500000\ncettua               0.500000\nzhejiangjiajia       0.250000\nmusclepharm          0.250000\nbabolat              0.250000\neuroprint            0.222222\nhanma                0.200000\nast                  0.200000\nhomeart              0.200000\nhuile                0.200000\nalphaline            0.200000\nant                  0.200000\nambition            "
+  },
+  {
+    "id": "H5",
+    "statement": "The time of day embedded in event_time influences event_type distribution, with purchase events more likely during evening hours when users have more leisure time.",
+    "columns": [
+      "event_time",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['hour'] = pd.to_datetime(df['event_time']).dt.hour\nresult = df.groupby('hour')['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\nprint(result)",
+    "chart_type": "line",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "Purchase rates are actually highest in early morning hours (4-8 AM) and lowest during evening hours (16-18), which is the opposite of the hypothesis.",
+    "business_insight": "Marketing and promotional efforts should be targeted at early morning hours (4-8 AM) when purchase conversion rates peak, rather than evening hours.",
+    "output": "event_type  purchase_rate\nhour                     \n0                0.010273\n1                0.007448\n2                0.009442\n3                0.015089\n4                0.015697\n5                0.017748\n6                0.017542\n7                0.017913\n8                0.017201\n9                0.016118\n10               0.016339\n11               0.016534\n12               0.013229\n13               0.013064\n14               0.010909\n15               0.009332\n16               0.008332\n17    "
+  },
+  {
+    "id": "H6",
+    "statement": "A higher category_price_ratio (product price relative to category average) is negatively associated with purchase events, as overpriced items within a category deter buyers.",
+    "columns": [
+      "category_price_ratio",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\nratio_bins = pd.qcut(df['category_price_ratio'], q=5, duplicates='drop')\nresult = df.groupby(ratio_bins)['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\nprint(result)",
+    "chart_type": "bar",
+    "expected_direction": "negative",
+    "verdict": "FALSE",
+    "reason": "Purchase rates do not show a consistent negative trend across category_price_ratio bins; rates fluctuate non-monotonically, peaking in the middle bin (0.112\u20130.126) rather than declining steadily.",
+    "business_insight": "Price relative to category average does not straightforwardly deter purchases, suggesting other factors like brand loyalty or product uniqueness may outweigh price comparisons within a category.",
+    "output": "event_type            purchase_rate\ncategory_price_ratio               \n(-0.001, 0.0933]           0.013029\n(0.0933, 0.112]            0.009989\n(0.112, 0.126]             0.016332\n(0.126, 0.142]             0.012261\n(0.142, 0.182]             0.013340\n"
+  },
+  {
+    "id": "H7",
+    "statement": "Users with higher user_price_interact values (a proxy for total spend potential) are more likely to generate purchase events, indicating high-value users convert at a higher rate.",
+    "columns": [
+      "user_price_interact",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ninteract_bins = pd.qcut(df['user_price_interact'], q=5, duplicates='drop')\nresult = df.groupby(interact_bins)['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\nprint(result)",
+    "chart_type": "line",
+    "expected_direction": "positive",
+    "verdict": "INCONCLUSIVE",
+    "reason": "Purchase rates show no consistent upward trend across user_price_interact quintiles, ranging from 1.04% to 1.51% without a clear monotonic relationship between spend potential and conversion rate.",
+    "business_insight": "Since high-value users do not consistently convert at higher rates, targeted re-engagement campaigns should focus on mid-tier segments (e.g., the third quintile at 1.51%) which show the highest purchase rates rather than solely prioritizing top spenders.",
+    "output": "event_type                        purchase_rate\nuser_price_interact                            \n(-0.001, 2152624184.964]                0.01264\n(2152624184.964, 2588203264.023]        0.01045\n(2588203264.023, 2915036895.896]        0.01512\n(2915036895.896, 3289467041.906]        0.01296\n(3289467041.906, 4486286498.068]        0.01378\n"
+  },
+  {
+    "id": "H8",
+    "statement": "Users with more events per session (higher feat_ratio) are more likely to purchase, as greater engagement within a session signals stronger purchase intent.",
+    "columns": [
+      "feat_ratio",
+      "event_type",
+      "user_session"
+    ],
+    "test_code": "import pandas as pd\nratio_bins = pd.qcut(df['feat_ratio'], q=5, duplicates='drop')\nresult = df.groupby(ratio_bins)['event_type'].value_counts(normalize=True).unstack(fill_value=0)\nif 'purchase' in result.columns:\n    result = result[['purchase']].rename(columns={'purchase': 'purchase_rate'})\nprint(result)",
+    "chart_type": "bar",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "Purchase rate is highest in the lowest feat_ratio bin and consistently decreases as feat_ratio increases, showing the opposite of the hypothesized relationship.",
+    "business_insight": "Users who trigger fewer events per session are actually more likely to convert, suggesting that high-intent buyers navigate efficiently and directly to purchase without excessive browsing.",
+    "output": "event_type                     purchase_rate\nfeat_ratio                                  \n(-0.000999999999512, 4.9e-13]       0.024451\n(4.9e-13, 1.75e-12]                 0.010970\n(1.75e-12, 5.26e-12]                0.011721\n(5.26e-12, 1.04e-11]                0.011412\n(1.04e-11, 4.87e-11]                0.006390\n"
+  },
+  {
+    "id": "H9",
+    "statement": "The log-transformed price (log_price) shows a stronger linear relationship with purchase probability than raw price, suggesting diminishing price sensitivity at higher price points.",
+    "columns": [
+      "log_price",
+      "price",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\ndf['purchase_flag'] = (df['event_type'] == 'purchase').astype(int)\nlog_corr = df['log_price'].corr(df['purchase_flag'])\nraw_corr = df['price'].corr(df['purchase_flag'])\nprint(f'Log Price Correlation with Purchase: {log_corr:.4f}')\nprint(f'Raw Price Correlation with Purchase: {raw_corr:.4f}')\nresult = pd.DataFrame({'metric': ['log_price_corr', 'raw_price_corr'], 'value': [log_corr, raw_corr]})\nprint(result)",
+    "chart_type": "bar",
+    "expected_direction": "negative",
+    "verdict": "TRUE",
+    "reason": "Log-transformed price shows a correlation of 0.0031 with purchase probability, approximately 8x stronger than raw price correlation of 0.0004, confirming the hypothesis directionally.",
+    "business_insight": "Although both correlations are extremely weak in absolute terms, the stronger log-price relationship suggests marginal price increases matter less at higher price points, supporting tiered or premium pricing strategies.",
+    "output": "Log Price Correlation with Purchase: 0.0031\nRaw Price Correlation with Purchase: 0.0004\n           metric     value\n0  log_price_corr  0.003060\n1  raw_price_corr  0.000372\n"
+  },
+  {
+    "id": "H10",
+    "statement": "The interaction feature feat_interact captures a combined signal from user and product attributes that better separates view, cart, and purchase events than individual features alone.",
+    "columns": [
+      "feat_interact",
+      "feat_product",
+      "feat_diff",
+      "event_type"
+    ],
+    "test_code": "import pandas as pd\nresult = df.groupby('event_type')[['feat_interact', 'feat_product', 'feat_diff']].mean()\nprint(result)\nstd_result = df.groupby('event_type')[['feat_interact', 'feat_product', 'feat_diff']].std()\nprint('\\nStandard Deviations:')\nprint(std_result)",
+    "chart_type": "heatmap",
+    "expected_direction": "positive",
+    "verdict": "FALSE",
+    "reason": "feat_interact means overlap substantially across event types (cart: 1.07e9, purchase: 1.05e9, view: 2.10e9) with standard deviations (3.15e9, 2.12e9, 5.18e9) that dwarf the differences between groups, indicating poor separation.",
+    "business_insight": "The interaction feature does not reliably distinguish purchase intent from browsing or cart behavior, so relying on it for conversion funnel optimization or targeting would likely yield poor results.",
+    "output": "            feat_interact  feat_product     feat_diff\nevent_type                                           \ncart         1.066246e+09 -8.093303e+16 -2.055278e+18\npurchase     1.053925e+09 -2.216288e+17 -2.054945e+18\nview         2.097210e+09  4.454856e+14 -2.057931e+18\n\nStandard Deviations:\n            feat_interact  feat_product     feat_diff\nevent_type                                           \ncart         3.152730e+09  5.472022e+18  1.421741e+16\npurchase     2.119898e+09  5.502933e+18  1.312"
   }
 ]

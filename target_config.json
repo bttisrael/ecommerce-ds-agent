@@ -1,17 +1,19 @@
 {
-  "target_col": "late_delivery_risk",
+  "target_col": "event_type",
   "problem_type": "classification",
-  "ai_justification": "Auto-selected fallback: 'late_delivery_risk' chosen from actual dataset columns.",
+  "ai_justification": "Forced via CONFIG['forced_target'] = 'event_type'.",
   "ai_feature_strategy": "Create ratio and interaction features between numeric variables.",
   "ai_insights": [
-    "Dataset has 180,519 rows \u00d7 53 columns. Target auto-detected as 'late_delivery_risk'."
+    "Target 'event_type' set manually in CONFIG.",
+    "Dataset: 500,000 rows \u00d7 9 columns.",
+    "Value counts: {'view': 480453, 'cart': 13052, 'purchase': 6495}"
   ],
   "hypothesis_insights": [
-    "Orders that take longer than their scheduled shipping window are highly likely to be flagged as late delivery risks, so proactively monitoring and expediting orders approaching their shipping deadline could significantly reduce late deliveries.",
-    "The business should prioritize targeted logistics improvements and buffer inventory for high-risk categories like Golf Bags & Carts, Pet Supplies, and Cameras to reduce late deliveries and improve customer satisfaction in these segments."
+    "Marketing efforts should prioritize high-converting brands like uralsport and larocheposay while investigating and addressing the factors limiting conversion for lower-performing brands to optimize overall revenue.",
+    "Although both correlations are extremely weak in absolute terms, the stronger log-price relationship suggests marginal price increases matter less at higher price points, supporting tiered or premium pricing strategies."
   ],
   "true_hypotheses": [
-    "Orders where days_for_shipping_real exceeds days_for_shipment_scheduled tend to have higher late_delivery_risk, as actual shipping time surpassing the scheduled window is a direct indicator of lateness.",
-    "Orders placed in certain category_names (e.g., bulky or high-volume categories) tend to have higher late_delivery_risk, as category-specific logistics complexity and demand spikes can disrupt on-time delivery."
+    "Specific brands are associated with higher purchase conversion rates, suggesting brand loyalty and trust play a significant role in the purchase decision.",
+    "The log-transformed price (log_price) shows a stronger linear relationship with purchase probability than raw price, suggesting diminishing price sensitivity at higher price points."
   ]
 }

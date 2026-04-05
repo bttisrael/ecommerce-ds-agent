@@ -1,21 +1,16 @@
 # Error Analysis
 
-## Model: `XGBoost` | Target: `late_delivery_risk`
+Failure rate: 0.0391 (3.9%)
 
-**Overall failure rate:** 0.0255 (2.6% of test samples misclassified)
-
-## Classification Report
 ```
               precision    recall  f1-score   support
 
-           0       1.00      0.94      0.97     16308
-           1       0.96      1.00      0.98     19796
+           0       0.00      0.00      0.00      2610
+           1       0.00      0.00      0.00      1299
+           2       0.96      1.00      0.98     96091
 
-    accuracy                           0.97     36104
-   macro avg       0.98      0.97      0.97     36104
-weighted avg       0.98      0.97      0.97     36104
+    accuracy                           0.96    100000
+   macro avg       0.32      0.33      0.33    100000
+weighted avg       0.92      0.96      0.94    100000
 
 ```
-
-## Error Analysis Chart
-See `error_analysis.png` for confusion matrix and per-class accuracy.

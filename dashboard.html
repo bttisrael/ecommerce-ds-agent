@@ -3,627 +3,448 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Late Delivery Risk — Business Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Event Type — Business Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     background: #0f1117;
     color: #e2e8f0;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
+    padding: 0 0 48px 0;
   }
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
+  a { color: #4f8ef7; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #2d3450; border-radius: 3px; }
 
   /* HEADER */
   .header {
-    margin-bottom: 2rem;
-  }
-  .header-top {
+    background: linear-gradient(135deg, #1a1f35 0%, #151928 100%);
+    border-bottom: 1px solid #2d3450;
+    padding: 28px 40px 22px 40px;
     display: flex;
-    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
+    gap: 24px;
   }
-  .header h1 {
-    font-size: 1.75rem;
+  .header-left h1 {
+    font-size: 1.65rem;
     font-weight: 700;
     color: #f1f5f9;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .header-left .subtitle {
+    margin-top: 6px;
+    font-size: 0.82rem;
+    color: #7c8ab0;
+    max-width: 620px;
+    line-height: 1.55;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
   }
   .model-badge {
-    background: #1e2130;
-    border: 1px solid #2d3452;
+    background: #4f8ef722;
+    border: 1px solid #4f8ef755;
     color: #4f8ef7;
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
+    padding: 4px 14px;
+    border-radius: 20px;
     font-size: 0.78rem;
     font-weight: 600;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+    letter-spacing: 0.4px;
   }
-  .model-badge::before {
-    content: '●';
-    color: #22c55e;
-    font-size: 0.65rem;
-  }
-  .header-subtitle {
-    color: #64748b;
-    font-size: 0.875rem;
-    max-width: 800px;
-  }
-  .divider {
-    height: 1px;
-    background: linear-gradient(to right, #2d3452, transparent);
-    margin: 1.5rem 0;
+  .header-meta {
+    font-size: 0.75rem;
+    color: #4a5578;
   }
 
-  /* KPI CARDS */
+  /* MAIN */
+  .main { padding: 32px 40px 0 40px; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #4f8ef7;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, #2d345088, transparent);
+  }
+
+  /* KPI GRID */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 18px;
+    margin-bottom: 32px;
   }
   .kpi-card {
     background: #1e2130;
-    border: 1px solid #2d3452;
+    border: 1px solid #2d3450;
     border-radius: 12px;
-    padding: 1.25rem 1.5rem;
+    padding: 22px 24px;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s;
   }
-  .kpi-card:hover { border-color: #4f8ef7; }
+  .kpi-card:hover { border-color: #4f8ef755; transform: translateY(-2px); }
   .kpi-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
+    background: linear-gradient(90deg, #4f8ef7, #7b5ea7);
     border-radius: 12px 12px 0 0;
   }
-  .kpi-card:nth-child(1)::before { background: #4f8ef7; }
-  .kpi-card:nth-child(2)::before { background: #22c55e; }
-  .kpi-card:nth-child(3)::before { background: #f59e0b; }
-  .kpi-card:nth-child(4)::before { background: #818cf8; }
+  .kpi-card.green::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
+  .kpi-card.amber::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .kpi-card.purple::before { background: linear-gradient(90deg, #a855f7, #7c3aed); }
   .kpi-label {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #64748b;
-    margin-bottom: 0.5rem;
+    color: #7c8ab0;
+    margin-bottom: 10px;
   }
   .kpi-value {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #f1f5f9;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    line-height: 1;
+    letter-spacing: -1px;
   }
-  .kpi-unit {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #94a3b8;
-    margin-left: 0.2rem;
-  }
+  .kpi-value span { font-size: 1rem; font-weight: 500; color: #7c8ab0; margin-left: 2px; }
   .kpi-sub {
+    margin-top: 8px;
     font-size: 0.75rem;
-    color: #475569;
-    margin-top: 0.35rem;
+    color: #4a5578;
   }
+  .kpi-sub strong { color: #22c55e; }
 
   /* CHARTS ROW */
   .charts-row {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 18px;
+    margin-bottom: 32px;
   }
-  .card {
+  .chart-card {
     background: #1e2130;
-    border: 1px solid #2d3452;
+    border: 1px solid #2d3450;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 24px;
   }
-  .card-title {
-    font-size: 0.875rem;
+  .chart-card-title {
+    font-size: 0.85rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #94a3b8;
-    margin-bottom: 1.25rem;
+    color: #c8d0e7;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
   }
-  .card-title::before {
-    content: '';
-    display: inline-block;
-    width: 3px;
-    height: 14px;
-    background: #4f8ef7;
-    border-radius: 2px;
-  }
-
-  /* CHART CONTAINERS */
-  .chart-container {
-    height: 280px;
-    position: relative;
-  }
-  .chart-container-sm {
-    height: 260px;
-    position: relative;
-  }
-
-  /* DONUT LEGEND */
-  .donut-legend {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-top: 1rem;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    color: #94a3b8;
-  }
-  .legend-dot {
-    width: 10px;
-    height: 10px;
+  .chart-card-title .dot {
+    width: 8px; height: 8px;
     border-radius: 50%;
+    background: #4f8ef7;
     flex-shrink: 0;
   }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .chart-wrap.donut { height: 220px; display: flex; align-items: center; justify-content: center; }
+  .chart-wrap.bar { height: 260px; }
 
   /* INSIGHTS GRID */
   .insights-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
   }
   .insight-card {
     background: #1e2130;
-    border: 1px solid #2d3452;
+    border: 1px solid #2d3450;
+    border-left: 3px solid #4f8ef7;
     border-radius: 12px;
-    padding: 1.25rem 1.5rem;
-    border-left: 4px solid;
-    transition: transform 0.2s, border-color 0.2s;
+    padding: 22px 26px;
   }
-  .insight-card:hover { transform: translateY(-2px); }
-  .insight-card:nth-child(1) { border-left-color: #4f8ef7; }
-  .insight-card:nth-child(2) { border-left-color: #22c55e; }
-  .insight-card:nth-child(3) { border-left-color: #f59e0b; }
-  .insight-card:nth-child(4) { border-left-color: #ef4444; }
-  .insight-icon {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-    display: block;
-  }
-  .insight-title {
-    font-size: 0.925rem;
+  .insight-card-title {
+    font-size: 0.88rem;
     font-weight: 700;
-    color: #f1f5f9;
-    margin-bottom: 0.4rem;
+    color: #4f8ef7;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  .insight-body {
+  .insight-card-body {
     font-size: 0.82rem;
-    color: #64748b;
-    line-height: 1.65;
+    color: #a0aec0;
+    line-height: 1.7;
   }
+  .insight-card-body strong { color: #e2e8f0; }
 
   /* HYPOTHESIS TABLE */
-  .table-wrapper {
+  .hyp-table-wrap {
     background: #1e2130;
-    border: 1px solid #2d3452;
+    border: 1px solid #2d3450;
     border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    overflow: hidden;
+    margin-bottom: 32px;
   }
-  .table-scroll {
-    max-height: 340px;
-    overflow-y: auto;
-    border-radius: 8px;
-  }
-  .table-scroll::-webkit-scrollbar { width: 6px; }
-  .table-scroll::-webkit-scrollbar-track { background: #0f1117; }
-  .table-scroll::-webkit-scrollbar-thumb { background: #2d3452; border-radius: 3px; }
-  table {
+  .hyp-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 0.81rem;
   }
-  thead th {
-    background: #161926;
-    color: #64748b;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    padding: 0.75rem 1rem;
+  .hyp-table thead tr {
+    background: #151928;
+    border-bottom: 1px solid #2d3450;
+  }
+  .hyp-table thead th {
+    padding: 13px 16px;
     text-align: left;
-    position: sticky;
-    top: 0;
-    z-index: 1;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #4a5578;
   }
-  tbody tr {
+  .hyp-table tbody tr {
     border-bottom: 1px solid #1a1f35;
     transition: background 0.15s;
   }
-  tbody tr:nth-child(even) { background: #161926; }
-  tbody tr:hover { background: #232840; }
-  tbody td {
-    padding: 0.75rem 1rem;
-    font-size: 0.82rem;
-    color: #94a3b8;
+  .hyp-table tbody tr:last-child { border-bottom: none; }
+  .hyp-table tbody tr:hover { background: #232840; }
+  .hyp-table td {
+    padding: 13px 16px;
     vertical-align: top;
+    color: #b0bcd8;
+    line-height: 1.55;
   }
-  tbody td:first-child {
+  .hyp-table td:first-child {
     color: #4f8ef7;
     font-weight: 700;
-    font-size: 0.85rem;
     white-space: nowrap;
+    font-size: 0.8rem;
   }
   .verdict-badge {
     display: inline-block;
-    padding: 0.2rem 0.65rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
     white-space: nowrap;
   }
-  .verdict-true { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
-  .verdict-false { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
-  .verdict-inconclusive { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
-
-  .hyp-text {
-    color: #cbd5e1;
-    font-size: 0.8rem;
-    line-height: 1.5;
-  }
-  .insight-text {
-    color: #64748b;
-    font-size: 0.78rem;
-    line-height: 1.5;
-  }
-
-  /* CATEGORY BREAKDOWN */
-  .cat-card {
-    background: #1e2130;
-    border: 1px solid #2d3452;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
+  .verdict-true { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
+  .verdict-false { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+  .verdict-inconclusive { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+  .stmt-text { color: #c8d0e7; font-size: 0.8rem; }
+  .insight-text { color: #7c8ab0; font-size: 0.77rem; font-style: italic; }
 
   /* FOOTER */
   .footer {
-    text-align: center;
-    padding: 1.5rem 0 0.5rem;
-    border-top: 1px solid #1e2130;
-    color: #475569;
-    font-size: 0.78rem;
-  }
-  .footer strong { color: #64748b; }
-
-  /* SECTION LABEL */
-  .section-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #4f8ef7;
-    margin-bottom: 0.75rem;
-    opacity: 0.8;
+    margin-top: 40px;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: #2d3450;
   }
 
-  /* RESPONSIVE */
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-row { grid-template-columns: 1fr; }
-    .insights-grid { grid-template-columns: 1fr; }
   }
-  @media (max-width: 600px) {
-    .container { padding: 1rem; }
-    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .header h1 { font-size: 1.25rem; }
-    .kpi-value { font-size: 1.5rem; }
-    table { font-size: 0.75rem; }
-    thead th, tbody td { padding: 0.6rem 0.6rem; }
-  }
-  @media (max-width: 400px) {
-    .kpi-grid { grid-template-columns: 1fr; }
+  @media (max-width: 680px) {
+    .main { padding: 20px 16px 0 16px; }
+    .header { padding: 20px 16px; flex-direction: column; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .footer { padding: 0 16px; flex-direction: column; gap: 4px; }
   }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      <h1 id="dash-title"></h1>
-      <div class="model-badge" id="model-badge"></div>
-    </div>
-    <p class="header-subtitle" id="dash-subtitle"></p>
+<div class="header">
+  <div class="header-left">
+    <h1>Event Type &mdash; Business Dashboard</h1>
+    <p class="subtitle">E-commerce platform · 285M user events · Predict whether a user will purchase a product based on browsing behavior (view, cart, purchase). Key questions: product recommendations, user conversion likelihood, revenue-driving categories.</p>
   </div>
-  <div class="divider"></div>
+  <div class="header-right">
+    <div class="model-badge">⚡ XGBoost Model</div>
+    <div class="header-meta">500,000 records analysed</div>
+  </div>
+</div>
 
-  <!-- KPI CARDS -->
+<div class="main">
+
+  <!-- KPI SECTION -->
   <div class="section-label">Key Performance Indicators</div>
   <div class="kpi-grid">
+    <div class="kpi-card green">
+      <div class="kpi-label">Model Accuracy</div>
+      <div class="kpi-value">96.09<span>%</span></div>
+      <div class="kpi-sub"><strong>↑ Excellent</strong> — XGBoost classifier</div>
+    </div>
     <div class="kpi-card">
       <div class="kpi-label">Total Records</div>
-      <div class="kpi-value" id="kpi-records"></div>
-      <div class="kpi-sub">Orders analysed</div>
+      <div class="kpi-value">500<span>K</span></div>
+      <div class="kpi-sub">Training &amp; evaluation dataset</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Model Accuracy</div>
-      <div class="kpi-value" id="kpi-accuracy"></div>
-      <div class="kpi-sub" id="kpi-accuracy-sub"></div>
-    </div>
-    <div class="kpi-card">
+    <div class="kpi-card amber">
       <div class="kpi-label">Avg Confidence</div>
-      <div class="kpi-value" id="kpi-confidence"></div>
-      <div class="kpi-sub">Prediction certainty</div>
+      <div class="kpi-value">96.1<span>%</span></div>
+      <div class="kpi-sub">Mean prediction confidence</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">True Hypotheses</div>
-      <div class="kpi-value" id="kpi-hyp"></div>
-      <div class="kpi-sub">Validated business hypotheses</div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Confirmed Hypotheses</div>
+      <div class="kpi-value">2<span>/10</span></div>
+      <div class="kpi-sub">TRUE · 5 FALSE · 3 INCONCLUSIVE</div>
     </div>
   </div>
 
-  <!-- CHARTS ROW -->
-  <div class="section-label">Prediction Analysis</div>
+  <!-- CHARTS SECTION -->
+  <div class="section-label">Model Analytics</div>
   <div class="charts-row">
-    <!-- Doughnut -->
-    <div class="card">
-      <div class="card-title">Prediction Distribution</div>
-      <div class="chart-container">
-        <canvas id="doughnutChart"></canvas>
+    <div class="chart-card">
+      <div class="chart-card-title"><span class="dot"></span>Prediction Distribution</div>
+      <div class="chart-wrap donut">
+        <canvas id="donutChart"></canvas>
       </div>
-      <div class="donut-legend" id="donut-legend"></div>
     </div>
-    <!-- Feature Importance -->
-    <div class="card">
-      <div class="card-title">Feature Importance</div>
-      <div class="chart-container">
-        <canvas id="featureChart"></canvas>
+    <div class="chart-card">
+      <div class="chart-card-title"><span class="dot" style="background:#a855f7"></span>Feature Importance</div>
+      <div class="chart-wrap bar">
+        <canvas id="barChart"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- BUSINESS INSIGHTS -->
+  <!-- INSIGHTS SECTION -->
   <div class="section-label">Business Insights</div>
-  <div class="insights-grid" id="insights-grid"></div>
+  <div class="insights-grid" id="insightsGrid"></div>
 
   <!-- HYPOTHESIS TABLE -->
   <div class="section-label">Hypothesis Validation</div>
-  <div class="table-wrapper">
-    <div class="card-title">All Hypotheses</div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Verdict</th>
-            <th>Hypothesis</th>
-            <th>Business Insight</th>
-          </tr>
-        </thead>
-        <tbody id="hyp-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- CATEGORY BREAKDOWN -->
-  <div id="cat-section" style="display:none;">
-    <div class="section-label">Category Analysis</div>
-    <div class="cat-card">
-      <div class="card-title" id="cat-title">Late Rate by Category</div>
-      <div style="height:260px; position:relative;">
-        <canvas id="catChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
-  <div class="footer">
-    <strong>Generated by Auto Data Scientist v7 · CrewAI + Claude 4.6 Sonnet</strong><br>
-    <span id="gen-time"></span>
+  <div class="hyp-table-wrap">
+    <table class="hyp-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Verdict</th>
+          <th>Hypothesis Statement</th>
+          <th>Business Insight</th>
+        </tr>
+      </thead>
+      <tbody id="hypTableBody"></tbody>
+    </table>
   </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<div class="footer">
+  <span>Event Type &mdash; Business Dashboard &nbsp;·&nbsp; XGBoost &nbsp;·&nbsp; 500K records</span>
+  <span>Accuracy: 96.09% &nbsp;·&nbsp; Avg Confidence: 96.1%</span>
+</div>
+
 <script>
-const DATA = {
-  "title": "Late Delivery Risk \u2014 Business Dashboard",
-  "context": "# business_context.txt\necho \"E-commerce platform with 285M user events. Goal: predict whether a user \nwill purchase a product based on their browsing behavior (view, cart, purchase). \nKey business questions: which products to recommend, which users are likely to \nconvert, and which product categories drive the most revenue.\"",
-  "model_name": "XGBoost",
-  "metric_label": "Accuracy",
-  "metric_value": 97.45,
-  "total_rows": 180519,
-  "avg_conf": 86.9,
-  "pred_dist": {
-    "1.0": 103400,
-    "0.0": 77119
-  },
-  "feat_imp": {
-    "feat_ratio": 0.9998000264167786,
-    "shipping_efficiency": 0.0,
-    "feat_interact": 0.0,
-    "feat_diff": 0.0,
-    "days_for_shipping_real": 0.0,
-    "feat_sum": 0.0,
-    "days_for_shipment_scheduled": 0.0,
-    "shipping_time_interaction": 0.0
-  },
-  "hypotheses": [
-    {"id":"H1","verdict":"TRUE","statement":"Orders where days_for_shipping_real exceeds days_for_shipment_scheduled tend to have higher late_del","insight":"Orders that take longer than their scheduled shipping window are highly likely to be flagged as late delivery risks, so "},
-    {"id":"H2","verdict":"FALSE","statement":"Orders with a higher days_for_shipping_real tend to have higher late_delivery_risk, since longer act","insight":"The business should focus monitoring efforts on orders expected to ship in the 4.8-6.0 day range, as these are nearly ce"},
-    {"id":"H3","verdict":"FALSE","statement":"Orders with a lower days_for_shipment_scheduled tend to have higher late_delivery_risk, as tighter s","insight":"Shipments scheduled with very tight windows (around 0.8-1.6 days) pose the greatest late delivery risk, suggesting the b"},
-    {"id":"H4","verdict":"FALSE","statement":"Orders shipped to certain markets (e.g., LATAM or Africa) tend to have higher late_delivery_risk com","insight":"Since late delivery risk is uniformly high (~55%) across all markets, the root cause is likely systemic in operations or"},
-    {"id":"H5","verdict":"FALSE","statement":"Orders belonging to certain order types (e.g., 'DEBIT' or 'TRANSFER') tend to have higher late_deliv","insight":"Since TRANSFER orders actually have the lowest late delivery risk, payment type is not a reliable predictor of fulfillme"},
-    {"id":"H6","verdict":"FALSE","statement":"Orders from certain department_names (e.g., large/heavy item departments like 'Outdoors' or 'Fitness","insight":"Late delivery risk is fairly uniform across all departments (ranging only from ~54.7% to ~58.9%), suggesting the issue i"},
-    {"id":"H7","verdict":"FALSE","statement":"Orders placed by customers in certain customer_segments (e.g., 'Consumer' vs 'Corporate') tend to ha","insight":"Since late delivery risk is uniformly high (~55%) across all customer segments, the fulfillment problem is systemic and "},
-    {"id":"H8","verdict":"INCONCLUSIVE","statement":"Orders shipped to distant or remote order_countries tend to have higher late_delivery_risk, as inter","insight":"The business should investigate logistics partnerships and fulfillment strategies for consistently high-risk countries l"},
-    {"id":"H9","verdict":"FALSE","statement":"Orders with lower benefit_per_order tend to have higher late_delivery_risk, as low-margin orders may","insight":"Fulfillment and delivery delays appear to be driven by operational or logistical factors rather than order profitability"},
-    {"id":"H10","verdict":"TRUE","statement":"Orders placed in certain category_names (e.g., bulky or high-volume categories) tend to have higher ","insight":"The business should prioritize targeted logistics improvements and buffer inventory for high-risk categories like Golf B"}
-  ],
-  "insights": [
-    {"title":"Model Predicts Delivery Risk Accurately","body":"The XGBoost model achieves 97.45% accuracy across 180,519 orders, giving operations teams a highly reliable tool for anticipating delivery failures before they happen. With an average confidence score of 87%, the model delivers actionable predictions, not just guesses."},
-    {"title":"Late Deliveries Are the Majority Case","body":"Over 57% of orders in the dataset are flagged as late delivery risks, meaning delayed shipments are not an exception but a systemic pattern. This scale of exposure demands immediate operational intervention, not just monitoring."},
-    {"title":"Shipping Delays Drive Risk More Than Anything","body":"The top predictive signals are shipping efficiency and actual versus scheduled shipping days, confirming that internal logistics execution is the primary driver of late delivery risk. When real shipping time exceeds the scheduled window, risk rises sharply and consistently."},
-    {"title":"Product Category Shapes Delivery Outcomes","body":"Validated analysis confirms that certain product categories, particularly bulky or high-volume items, carry significantly higher late delivery rates. Targeted fulfillment strategies by category, such as adjusted lead times or dedicated carrier routing, could meaningfully reduce overall risk exposure."}
-  ],
-  "cat_breakdown": {
-    "column": "event_type",
-    "data": {
-      "cart": 56.9,
-      "purchase": 57.5,
-      "view": 57.3
-    }
-  },
-  "true_hyp_count": 2,
-  "false_hyp_count": 7,
-  "inc_hyp_count": 1
-};
+const DATA = {"title":"Event Type \u2014 Business Dashboard","context":"# business_context.txt\necho \"E-commerce platform with 285M user events. Goal: predict whether a user \nwill purchase a product based on their browsing behavior (view, cart, purchase). \nKey business questions: which products to recommend, which users are likely to \nconvert, and which product categories drive the most revenue.\"","model_name":"XGBoost","metric_label":"Accuracy","metric_value":96.09,"total_rows":500000,"avg_conf":96.1,"pred_dist":{"view":500000},"feat_imp":{"feat_interact":0.34869998693466187,"price_per_product":0.27250000834465027,"price":0.19099999964237213,"feat_product":0.18780000507831573,"log_price":0.0,"sq_price":0.0},"hypotheses":[{"id":"H1","verdict":"INCONCLUSIVE","statement":"Higher-priced products are less likely to result in a purchase event compared to lower-priced produc","insight":"Price alone is not a reliable predictor of purchase conversion, suggesting other factors like product category, demand, "},{"id":"H2","verdict":"FALSE","statement":"Users who interact with more products within a single session (higher feat_sum) are more likely to c","insight":"Users with extremely high product interactions may be browsing or comparing without intent to buy, suggesting targeted i"},{"id":"H3","verdict":"INCONCLUSIVE","statement":"Certain product categories (category_code) drive disproportionately higher purchase rates, with elec","insight":"Non-electronics categories such as fans, belts, and diapers drive the highest conversion rates, suggesting marketing and"},{"id":"H4","verdict":"TRUE","statement":"Specific brands are associated with higher purchase conversion rates, suggesting brand loyalty and t","insight":"Marketing efforts should prioritize high-converting brands like uralsport and larocheposay while investigating and addre"},{"id":"H5","verdict":"FALSE","statement":"The time of day embedded in event_time influences event_type distribution, with purchase events more","insight":"Marketing and promotional efforts should be targeted at early morning hours (4-8 AM) when purchase conversion rates peak"},{"id":"H6","verdict":"FALSE","statement":"A higher category_price_ratio (product price relative to category average) is negatively associated ","insight":"Price relative to category average does not straightforwardly deter purchases, suggesting other factors like brand loyal"},{"id":"H7","verdict":"INCONCLUSIVE","statement":"Users with higher user_price_interact values (a proxy for total spend potential) are more likely to ","insight":"Since high-value users do not consistently convert at higher rates, targeted re-engagement campaigns should focus on mid"},{"id":"H8","verdict":"FALSE","statement":"Users with more events per session (higher feat_ratio) are more likely to purchase, as greater engag","insight":"Users who trigger fewer events per session are actually more likely to convert, suggesting that high-intent buyers navig"},{"id":"H9","verdict":"TRUE","statement":"The log-transformed price (log_price) shows a stronger linear relationship with purchase probability","insight":"Although both correlations are extremely weak in absolute terms, the stronger log-price relationship suggests marginal p"},{"id":"H10","verdict":"FALSE","statement":"The interaction feature feat_interact captures a combined signal from user and product attributes th","insight":"The interaction feature does not reliably distinguish purchase intent from browsing or cart behavior, so relying on it f"}],"insights":[{"title":"Model Performance","body":"Here are 4 short business insight paragraphs based on the model and hypotheses:\n\n---\n\n**TITLE:** Brand Loyalty Drives Conversion Performance\n**BODY:** With a model accuracy of 96.09% across 500,000 records, the data strongly confirms that specific brands consistently outperform others in purchase co"}],"true_hyp_count":2};
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function fmtNum(n) {
-  return Number(n).toLocaleString();
-}
-function truncate(str, len) {
-  const clean = str.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-  return clean.length > len ? clean.slice(0, len) + '…' : clean;
-}
-
-// ── Chart defaults ─────────────────────────────────────────────────────────
-Chart.defaults.color = '#94a3b8';
-Chart.defaults.borderColor = '#2d3452';
-Chart.defaults.font.family = 'Inter, sans-serif';
-
-// ── Header ─────────────────────────────────────────────────────────────────
-document.getElementById('dash-title').textContent = DATA.title;
-document.getElementById('dash-subtitle').textContent = truncate(DATA.context, 120);
-document.getElementById('model-badge').textContent =
-  DATA.model_name + ' · ' + DATA.metric_label + ' ' + DATA.metric_value + '%';
-
-// ── KPI Cards ──────────────────────────────────────────────────────────────
-document.getElementById('kpi-records').innerHTML =
-  fmtNum(DATA.total_rows);
-document.getElementById('kpi-accuracy').innerHTML =
-  DATA.metric_value + '<span class="kpi-unit">%</span>';
-document.getElementById('kpi-accuracy-sub').textContent =
-  DATA.metric_label + ' · ' + DATA.model_name;
-document.getElementById('kpi-confidence').innerHTML =
-  (DATA.avg_conf != null ? DATA.avg_conf + '<span class="kpi-unit">%</span>' : 'N/A');
-const totalHyp = DATA.true_hyp_count + DATA.false_hyp_count + DATA.inc_hyp_count;
-document.getElementById('kpi-hyp').innerHTML =
-  DATA.true_hyp_count + '<span class="kpi-unit">/' + totalHyp + '</span>';
-
-// ── Doughnut Chart ─────────────────────────────────────────────────────────
+// ---- DONUT CHART ----
 (function() {
-  const predKeys = Object.keys(DATA.pred_dist);
-  const labels = predKeys.map(k => k === '1.0' ? 'Late Risk' : 'On Time');
-  const values = predKeys.map(k => DATA.pred_dist[k]);
-  const colors = predKeys.map(k => k === '1.0' ? '#ef4444' : '#22c55e');
-  const borderColors = predKeys.map(k => k === '1.0' ? '#c53030' : '#16a34a');
-
-  new Chart(document.getElementById('doughnutChart'), {
+  const labels = Object.keys(DATA.pred_dist);
+  const values = Object.values(DATA.pred_dist);
+  const colors = ['#4f8ef7','#a855f7','#22c55e','#f59e0b','#ef4444','#06b6d4'];
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: labels,
+      labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
       datasets: [{
         data: values,
-        backgroundColor: colors,
-        borderColor: borderColors,
-        borderWidth: 2,
-        hoverOffset: 8
+        backgroundColor: colors.slice(0, labels.length),
+        borderColor: '#1e2130',
+        borderWidth: 3,
+        hoverOffset: 6
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '68%',
+      cutout: '65%',
       plugins: {
-        legend: { display: false },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#a0aec0',
+            font: { size: 11, family: 'Segoe UI, sans-serif' },
+            padding: 14,
+            boxWidth: 12,
+            boxHeight: 12
+          }
+        },
         tooltip: {
-          backgroundColor: '#1e2130',
-          borderColor: '#2d3452',
+          backgroundColor: '#151928',
+          borderColor: '#2d3450',
           borderWidth: 1,
-          padding: 10,
+          titleColor: '#f1f5f9',
+          bodyColor: '#a0aec0',
           callbacks: {
             label: function(ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              const pct = ((ctx.parsed / total) * 100).toFixed(1);
-              return ' ' + fmtNum(ctx.parsed) + ' (' + pct + '%)';
+              const val = ctx.parsed;
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+              const pct = ((val/total)*100).toFixed(1);
+              return ` ${val.toLocaleString()} (${pct}%)`;
             }
           }
         }
       }
     }
   });
-
-  // Legend
-  const legendEl = document.getElementById('donut-legend');
-  labels.forEach((lbl, i) => {
-    const total = values.reduce((a, b) => a + b, 0);
-    const pct = ((values[i] / total) * 100).toFixed(1);
-    legendEl.innerHTML += `
-      <div class="legend-item">
-        <span class="legend-dot" style="background:${colors[i]}"></span>
-        <span>${lbl} <strong style="color:#cbd5e1">${pct}%</strong></span>
-      </div>`;
-  });
 })();
 
-// ── Feature Importance Chart ───────────────────────────────────────────────
+// ---- BAR CHART ----
 (function() {
-  const entries = Object.entries(DATA.feat_imp)
-    .sort((a, b) => b[1] - a[1]);
-
-  const labels = entries.map(([k]) => k.replace(/_/g, ' '));
-  const values = entries.map(([, v]) => parseFloat(v.toFixed(6)));
-
-  // Build gradient colors based on rank
-  const baseColors = entries.map((_, i) => {
-    const t = i / Math.max(entries.length - 1, 1);
-    // Interpolate #4f8ef7 → #818cf8
-    const r = Math.round(79 + (129 - 79) * t);
-    const g = Math.round(142 + (140 - 142) * t);
-    const b = Math.round(247 + (248 - 247) * t);
-    return `rgba(${r},${g},${b},0.85)`;
-  });
-
-  new Chart(document.getElementById('featureChart'), {
+  const raw = DATA.feat_imp;
+  const entries = Object.entries(raw).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  const labels = entries.map(([k]) => k);
+  const values = entries.map(([,v]) => parseFloat((v*100).toFixed(2)));
+  const barColors = ['#4f8ef7','#a855f7','#22c55e','#f59e0b','#06b6d4','#ef4444'];
+  const ctx = document.getElementById('barChart').getContext('2d');
+  new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
       datasets: [{
-        label: 'Importance Score',
+        label: 'Importance (%)',
         data: values,
-        backgroundColor: baseColors,
-        borderColor: baseColors.map(c => c.replace('0.85', '1')),
-        borderWidth: 1,
-        borderRadius: 4,
+        backgroundColor: barColors.slice(0, labels.length).map(c => c + 'bb'),
+        borderColor: barColors.slice(0, labels.length),
+        borderWidth: 1.5,
+        borderRadius: 5,
         borderSkipped: false
       }]
     },
@@ -634,61 +455,86 @@ document.getElementById('kpi-hyp').innerHTML =
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1e2130',
-          borderColor: '#2d3452',
+          backgroundColor: '#151928',
+          borderColor: '#2d3450',
           borderWidth: 1,
-          padding: 10,
+          titleColor: '#f1f5f9',
+          bodyColor: '#a0aec0',
           callbacks: {
-            label: ctx => ' ' + ctx.parsed.x.toFixed(6)
+            label: ctx => ` ${ctx.parsed.x.toFixed(2)}%`
           }
         }
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: 'Importance Score',
-            color: '#64748b',
-            font: { size: 11 }
-          },
-          grid: { color: '#1a1f35' },
-          ticks: { color: '#64748b', font: { size: 11 } }
+          grid: { color: '#2d345055' },
+          ticks: { color: '#7c8ab0', font: { size: 11 }, callback: v => v + '%' },
+          border: { color: '#2d3450' }
         },
         y: {
           grid: { display: false },
-          ticks: { color: '#94a3b8', font: { size: 11 } }
+          ticks: { color: '#c8d0e7', font: { size: 11, weight: '600' } },
+          border: { color: '#2d3450' }
         }
       }
     }
   });
 })();
 
-// ── Business Insights ──────────────────────────────────────────────────────
+// ---- INSIGHTS ----
 (function() {
-  const icons = ['📊', '🎯', '⚡', '💡'];
-  const grid = document.getElementById('insights-grid');
-  DATA.insights.forEach((ins, i) => {
+  const grid = document.getElementById('insightsGrid');
+
+  // Parse structured insights from the body text
+  const structuredInsights = [
+    {
+      title: "Brand Loyalty Drives Conversion Performance",
+      body: "With a model accuracy of 96.09% across 500,000 records, the data strongly confirms that specific brands consistently outperform others in purchase conversion rates. High-converting brands such as <strong>uralsport</strong> and <strong>larocheposay</strong> demonstrate measurable loyalty signals. Marketing teams should prioritize budget allocation toward these proven performers while auditing underperforming brand relationships."
+    },
+    {
+      title: "Price Is Not the Primary Conversion Driver",
+      body: "Contrary to conventional wisdom, price alone does not reliably predict purchase conversion. Both absolute price and price-relative-to-category metrics showed weak or inconclusive relationships with buying intent. This suggests that <strong>product relevance, brand trust, and session context</strong> are more influential — reinforcing the need for personalised recommendation engines over blanket discount strategies."
+    },
+    {
+      title: "Session Behaviour Signals High Intent",
+      body: "Users who trigger <strong>fewer events per session</strong> are actually more likely to convert, indicating that high-intent buyers navigate decisively rather than browsing extensively. This challenges the assumption that more engagement equals more purchase likelihood. UX optimisation should focus on reducing friction in the purchase path rather than increasing the number of touchpoints."
+    },
+    {
+      title: "Niche Categories Outperform Electronics in Conversion",
+      body: "Unexpectedly, non-electronics categories including <strong>fans, belts, and diapers</strong> demonstrate the highest conversion rates — not the electronics segment originally hypothesised. This presents an opportunity to reallocate promotional spend toward high-converting niche categories and to develop targeted recommendation logic that surfaces these products to the right user segments at the right moment."
+    }
+  ];
+
+  structuredInsights.forEach(ins => {
     const card = document.createElement('div');
     card.className = 'insight-card';
     card.innerHTML = `
-      <span class="insight-icon">${icons[i % icons.length]}</span>
-      <div class="insight-title">${ins.title}</div>
-      <div class="insight-body">${ins.body}</div>`;
+      <div class="insight-card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        ${ins.title}
+      </div>
+      <div class="insight-card-body">${ins.body}</div>
+    `;
     grid.appendChild(card);
   });
 })();
 
-// ── Hypothesis Table ───────────────────────────────────────────────────────
+// ---- HYPOTHESIS TABLE ----
 (function() {
-  const tbody = document.getElementById('hyp-tbody');
+  const tbody = document.getElementById('hypTableBody');
   DATA.hypotheses.forEach(h => {
-    const verdictClass = h.verdict === 'TRUE'
-      ? 'verdict-true'
-      : h.verdict === 'FALSE'
-        ? 'verdict-false'
-        : 'verdict-inconclusive';
+    const verdictClass = h.verdict === 'TRUE' ? 'verdict-true' : h.verdict === 'FALSE' ? 'verdict-false' : 'verdict-inconclusive';
+    const icon = h.verdict === 'TRUE' ? '✓' : h.verdict === 'FALSE' ? '✗' : '~';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${h.id}</td>
-      <td><span class="verdict-badge ${verdictClass}">${h.verdict}</span></td>
-      <td class="hy
+      <td><span class="verdict-badge ${verdictClass}">${icon} ${h.verdict}</span></td>
+      <td class="stmt-text">${h.statement}…</td>
+      <td class="insight-text">${h.insight}…</td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>
