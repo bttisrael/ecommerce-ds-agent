@@ -203,6 +203,8 @@ CONFIG = {
     # (e.g. on datasets where JSON parsing fails). Set to None to use AI detection.
     # Example: "forced_target": "late_delivery_risk"
     "forced_target":             "event_type",
+    "silver_sample_size": 2_000_000,
+    "silver_sample_seed": 42,
 
     # ── Oracle Cloud auto-deploy ──────────────────────────────────────────────
     # Set ORACLE_VM_IP, ORACLE_KEY_PATH, and ORACLE_REPO_PATH in your .env file.
@@ -345,7 +347,7 @@ def download_and_save_silver(_: str = "") -> str:
         # Try multiple encodings — many Kaggle CSVs are not UTF-8
         for enc in ["utf-8", "latin-1", "iso-8859-1", "cp1252"]:
             try:
-                df = pd.read_csv(csv_path, encoding=enc)
+                df = pd.read_csv(csv_path,nrows=2000000 ,encoding=enc)
                 logger.info(f"[Ingestor] CSV read with encoding: {enc}")
                 break
             except UnicodeDecodeError:
