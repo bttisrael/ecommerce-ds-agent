@@ -5,7 +5,7 @@ echo "E-commerce platform with 285M user events. Goal: predict whether a user
 will purchase a product based on their browsing behavior (view, cart, purchase). 
 Key business questions: which products to recommend, which users are likely to 
 convert, and which product categories drive the most revenue."
-**Shape:** 2000000 x 9
+**Shape:** 5000000 x 9
 
 ## Applied Imputation
 - Mode applied to 'category_code'.
@@ -13,10 +13,10 @@ convert, and which product categories drive the most revenue."
 
 ## Detected Outliers (IQR)
 {
-  "product_id": 85554,
-  "category_id": 141746,
-  "price": 166353,
-  "user_id": 1346
+  "product_id": 219226,
+  "category_id": 362691,
+  "price": 419693,
+  "user_id": 3217
 }
 
 ## Intelligent Analysis by Claude
@@ -29,14 +29,14 @@ convert, and which product categories drive the most revenue."
 []
 
 ### Top Dataset Insights
-1. Dataset has 2,000,000 rows × 9 columns. Target auto-detected as 'event_type'.
+1. Dataset has 5,000,000 rows × 9 columns. Target auto-detected as 'event_type'.
 
 ### Recommended Feature Engineering Strategy
 Create ratio and interaction features between numeric variables.
 
 ### Analysis Execution Output
 ```
-(2000000, 9)
+(5000000, 9)
 event_time        object
 event_type        object
 product_id         int64

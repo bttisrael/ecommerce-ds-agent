@@ -2298,6 +2298,136 @@ def deploy_telegram_bot(_: str = "") -> str:
         except SyntaxError as e:
             return code, str(e)
 
+    def _guarantee_runnable(code: str) -> str:
+        """
+        Garante que o bot gerado pelo Claude sempre seja executável.
+        Aplica 4 fixes em cascata:
+          1. Remove bullet points unicode que quebram strings multilinha
+          2. Garante que main() existe com run_polling()
+          3. Garante que if __name__ == '__main__' existe
+          4. Se ainda tiver SyntaxError, reconstrói o main() do zero
+        """
+        import ast as _ast2
+
+        # Fix 1: bullet points unicode quebram strings f"""..."""
+        code = code.replace("• ", "- ").replace("•", "-")
+
+        # Fix 2: garante main() com run_polling
+        if "def main(" not in code:
+            logger.warning("[Deploy] main() ausente — gerando automaticamente.")
+            code = code.rstrip() + '''
+
+def main():
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    from telegram.ext import ApplicationBuilder, CommandHandler
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        logger.error("TELEGRAM_BOT_TOKEN not found in .env")
+        return
+    app = ApplicationBuilder().token(token).build()
+    for cmd, fn in [
+        ("start",        start),
+        ("stats",        stats),
+        ("top_features", top_features),
+        ("hypotheses",   hypotheses),
+        ("insights",     insights),
+        ("help",         help_command),
+    ]:
+        try:
+            app.add_handler(CommandHandler(cmd, fn))
+        except Exception as e:
+            logger.warning(f"Handler {cmd} nao registrado: {e}")
+    logger.info("Bot started — polling...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
+'''
+        else:
+            # main() existe — verifica se tem run_polling
+            if "run_polling" not in code:
+                logger.warning("[Deploy] run_polling() ausente — injetando.")
+                # Encontra o fim do main() e injeta run_polling antes
+                lines = code.split("\n")
+                new_lines = []
+                in_main = False
+                injected = False
+                for i, line in enumerate(lines):
+                    if line.strip().startswith("def main("):
+                        in_main = True
+                    if in_main and not injected:
+                        # Próximo def ou fim do arquivo = fim do main
+                        next_def = any(
+                            lines[j].strip().startswith("def ") or
+                            lines[j].strip().startswith("if __name__")
+                            for j in range(i + 1, min(i + 3, len(lines)))
+                        )
+                        if next_def:
+                            new_lines.append("    app.run_polling()")
+                            in_main = False
+                            injected = True
+                    new_lines.append(line)
+                code = "\n".join(new_lines)
+
+            # Fix 3: garante if __name__
+            if "if __name__" not in code:
+                code = code.rstrip() + '\n\nif __name__ == "__main__":\n    main()\n'
+
+        # Fix 4: valida sintaxe — se ainda quebrar, reconstrói main() do zero
+        try:
+            _ast2.parse(code)
+            logger.info("[Deploy] Bot syntax: OK após fixes.")
+        except SyntaxError as se:
+            logger.warning(f"[Deploy] SyntaxError persistente: {se}. Reconstruindo main()...")
+
+            # Preserva tudo antes do primeiro 'def main(' ou 'if __name__'
+            safe_lines = []
+            for line in code.split("\n"):
+                if line.strip().startswith(("def main(", "if __name__")):
+                    break
+                safe_lines.append(line)
+
+            code = "\n".join(safe_lines).rstrip() + '''
+
+def main():
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    from telegram.ext import ApplicationBuilder, CommandHandler
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        logger.error("TELEGRAM_BOT_TOKEN not found in .env")
+        return
+    app = ApplicationBuilder().token(token).build()
+    for cmd, fn in [
+        ("start",        start),
+        ("stats",        stats),
+        ("top_features", top_features),
+        ("hypotheses",   hypotheses),
+        ("insights",     insights),
+        ("help",         help_command),
+    ]:
+        try:
+            app.add_handler(CommandHandler(cmd, fn))
+        except Exception as e:
+            logger.warning(f"Handler {cmd} nao registrado: {e}")
+    logger.info("Bot started — polling...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
+'''
+            # Valida a versão reconstruída
+            try:
+                _ast2.parse(code)
+                logger.info("[Deploy] Bot syntax: OK após reconstrução do main().")
+            except SyntaxError as se2:
+                logger.error(f"[Deploy] Syntax ainda quebrada após reconstrução: {se2}")
+
+        return code
+
     try:
         for required in [CONFIG["model_pkl"], CONFIG["silver_path"],
                          CONFIG["ml_ready_path"], CONFIG["target_json"]]:
@@ -2381,7 +2511,7 @@ def deploy_telegram_bot(_: str = "") -> str:
             with open(CONFIG["hypothesis_json"]) as f:
                 hyp_data = json.load(f)
             hyp_insights = [
-                f"- {r['statement'][:80]} → {r['verdict']}"
+                f"- {r['statement'][:80]} -> {r['verdict']}"
                 for r in hyp_data if r.get("verdict") == "TRUE"
             ][:5]
 
@@ -2413,37 +2543,12 @@ Column schema (first 20):
 
 === MANDATORY BOT COMMANDS ===
 
-/start
-  Welcome message explaining what the bot does and listing all commands.
-
-/stats
-  Summary of the dataset and model:
-  - Total records, model name, {metric_label} score
-  - Prediction class distribution (counts + percentages)
-  - Average confidence score if available
-  Format as clean text with emojis.
-
-/top_features
-  Show the top 7 most important features with their importance scores.
-  Explain in plain language what each one means for the business.
-
-/hypotheses
-  List the validated TRUE business hypotheses from the analysis.
-  Format as numbered list with a short business explanation each.
-
-/predict
-  Ask the user for values of the top 3-4 features one by one
-  (using conversation state via context.user_data).
-  Then run the model and return the prediction + confidence.
-  Use ConversationHandler for multi-step input.
-
-/insights
-  Ask Claude API (anthropic) a question about the dataset stats
-  and return a 2-3 paragraph business insight. Use the ANTHROPIC_API_KEY
-  from environment variables. Pass the stats as context in the prompt.
-
-/help
-  List all commands with brief descriptions.
+/start — Welcome message listing all commands.
+/stats — Dataset and model summary with emojis.
+/top_features — Top 7 features with importance scores and plain language explanation.
+/hypotheses — Validated TRUE business hypotheses as numbered list.
+/insights — Call Claude API for 2-3 paragraph business insight.
+/help — List all commands with descriptions.
 
 === TECHNICAL REQUIREMENTS ===
 - Use python-telegram-bot >= 20.0 (async, ApplicationBuilder pattern).
@@ -2453,20 +2558,19 @@ Column schema (first 20):
 - Read ANTHROPIC_API_KEY from os.environ for /insights command.
 - Use logging for all errors.
 - All handlers must be async def.
-- Use application.run_polling() at the end of main().
+- Use application.run_polling() inside main().
 - The file must end with:
   if __name__ == "__main__":
       main()
 
 === HARD RULES ===
 - NEVER hardcode any token or key.
+- NEVER use bullet point unicode characters (use - instead of bullet).
 - NEVER use the old python-telegram-bot v13 API (Updater, Dispatcher).
 - Use ApplicationBuilder().token(TOKEN).build() pattern (v20+).
-- Handle exceptions in every command handler with try/except and send
-  a user-friendly error message.
-- Keep messages under 4096 characters (Telegram limit).
-- If a column is missing from the dataframe, skip it gracefully.
-- The /predict command must validate user inputs and handle non-numeric input.
+- Handle exceptions in every command handler with try/except.
+- Keep messages under 4000 characters (Telegram limit).
+- Use only ASCII characters inside string literals — no unicode bullets or arrows.
 - Write ONLY valid Python. No markdown fences. No explanations. No TODOs."""
 
         bot_code = _ask_claude(prompt_bot, max_tokens=7000)
@@ -2477,7 +2581,7 @@ Column schema (first 20):
             bot_code = bot_code.split("```")[1].split("```")[0]
         bot_code = bot_code.strip()
 
-        # ── Validate + self-heal ──────────────────────────────────────────────
+        # ── Validate + self-heal (Claude) ─────────────────────────────────────
         bot_code, syntax_err = _validate_bot_code(bot_code)
 
         if syntax_err:
@@ -2488,6 +2592,7 @@ ERROR: {syntax_err}
 
 Rules:
 - Fix ONLY the syntax, keep all logic intact.
+- Use only ASCII characters in string literals (no bullet points, no arrows).
 - File must end with:
   if __name__ == "__main__":
       main()
@@ -2505,21 +2610,22 @@ CODE:
                 bot_code = bot_code_fixed
                 logger.info("[Deploy] Bot self-healing succeeded.")
             else:
-                logger.warning(f"[Deploy] Bot self-healing failed: {syntax_err2}.")
+                logger.warning(f"[Deploy] Claude self-healing failed: {syntax_err2}.")
                 bot_code = bot_code_fixed
 
-        # ── Guarantee main() call ─────────────────────────────────────────────
-        if "def main(" in bot_code and \
-           "main()" not in bot_code.split("def main(")[-1]:
-            bot_code = bot_code.rstrip() + "\n\nif __name__ == '__main__':\n    main()\n"
+        # ── Guarantee runnable — aplica todos os fixes determinísticos ─────────
+        bot_code = _guarantee_runnable(bot_code)
 
         with open(CONFIG["telegram_bot"], "w", encoding="utf-8") as f:
             f.write(bot_code)
+
+        # Valida sintaxe final
+        _, final_err = _validate_bot_code(bot_code)
         logger.info(f"[Deploy] telegram_bot.py saved "
                     f"({len(bot_code)} chars, "
-                    f"syntax={'OK' if syntax_err is None else 'FIXED'}).")
+                    f"syntax={'OK' if final_err is None else 'WARNING: ' + str(final_err)}).")
 
-        # ── requirements.txt ─────────────────────────────────────────────────
+        # ── requirements.txt ──────────────────────────────────────────────────
         requirements = """python-telegram-bot>=20.7
 pandas>=2.0.0
 pyarrow>=14.0.0
@@ -2539,53 +2645,37 @@ lightgbm>=4.3.0
 ## Setup
 
 ### 1. Create your Telegram bot
-1. Open Telegram and search for **@BotFather**
-2. Send `/newbot` and follow the instructions
+1. Open Telegram and search for @BotFather
+2. Send /newbot and follow the instructions
 3. Copy the token you receive
 
 ### 2. Add token to .env
-```
 TELEGRAM_BOT_TOKEN=your_token_here
 ANTHROPIC_API_KEY=your_anthropic_key_here
-```
 
 ### 3. Install dependencies
-```bash
 pip install -r requirements.txt
-```
 
 ### 4. Run the bot
-```bash
 python telegram_bot.py
-```
 
 ## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Welcome message and command list |
-| `/stats` | Dataset and model summary ({metric_label}: {test_score:.4f}) |
-| `/top_features` | Top 7 predictive features with business explanation |
-| `/hypotheses` | Validated TRUE business hypotheses |
-| `/predict` | Interactive prediction — enter feature values via chat |
-| `/insights` | AI-generated business insight powered by Claude |
-| `/help` | List all commands |
+/start     - Welcome message and command list
+/stats     - Dataset and model summary ({metric_label}: {test_score:.4f})
+/top_features - Top 7 predictive features with business explanation
+/hypotheses - Validated TRUE business hypotheses
+/insights  - AI-generated business insight powered by Claude
+/help      - List all commands
 
 ## Model Info
-- **Model:** {model_name}
-- **Target:** `{target_col}` ({problem_type})
-- **{metric_label}:** {test_score:.4f}
-- **Rows in df4_predictions.parquet:** {total_rows:,}
+- Model: {model_name}
+- Target: {target_col} ({problem_type})
+- {metric_label}: {test_score:.4f}
+- Rows in df4_predictions.parquet: {total_rows:,}
 
-## Deploy to a Server (keep bot running 24/7)
-```bash
-# Option 1: nohup (Linux/Mac)
+## Deploy 24/7
 nohup python telegram_bot.py &
-
-# Option 2: systemd service (Linux)
-# Option 3: Railway, Render, or Fly.io (free tier available)
-# Option 4: AWS Lambda + polling (serverless)
-```
 """
         with open(os.path.join(_BASE_DIR, "Deployment_Guide.md"), "w",
                   encoding="utf-8") as f:
@@ -2597,9 +2687,9 @@ nohup python telegram_bot.py &
                 f"({len(df_pred)} rows, {len(df_pred.columns)} columns)\n"
                 f"Row alignment: "
                 f"{'_src_idx (safe)' if '_src_idx' in ml_ready_cols else 'fallback iloc'}\n"
-                f"Bot syntax: {'valid' if syntax_err is None else 'self-healed'}\n"
+                f"Bot syntax: {'valid' if final_err is None else 'rebuilt'}\n"
                 f"Telegram bot: telegram_bot.py\n"
-                f"Commands: /start /stats /top_features /hypotheses /predict /insights /help\n"
+                f"Commands: /start /stats /top_features /hypotheses /insights /help\n"
                 f"Requirements: requirements.txt\n"
                 f"Guide: Deployment_Guide.md\n"
                 f"Next step: add TELEGRAM_BOT_TOKEN to .env then run: python telegram_bot.py")

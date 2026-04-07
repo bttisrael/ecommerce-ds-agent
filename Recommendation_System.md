@@ -11,49 +11,49 @@
 
 - User column: `user_price_ratio`
 - Item column: `feat_product`
-- Rating column: `price_zscore_abs`
-- Features used: 7
-- Sampled rows: 3000 of 2000000
+
+- Features used: 5
+- Sampled rows: 3000 of 5000000
 
 ## Sample Recommendations
 ```json
 [
   {
-    "entity_idx": 1037,
-    "recommended_idx": 1645698,
-    "similarity": 0.9908,
+    "entity_idx": 2593,
+    "recommended_idx": 3265913,
+    "similarity": 0.9975,
     "rank": 1,
     "rec_prediction": "view",
     "strategy": "content_based_cosine"
   },
   {
-    "entity_idx": 2134,
-    "recommended_idx": 540459,
-    "similarity": 0.9894,
-    "rank": 1,
-    "rec_prediction": "view",
-    "strategy": "content_based_cosine"
-  },
-  {
-    "entity_idx": 2464,
-    "recommended_idx": 659427,
-    "similarity": 0.9928,
-    "rank": 1,
-    "rec_prediction": "view",
-    "strategy": "content_based_cosine"
-  },
-  {
-    "entity_idx": 2493,
-    "recommended_idx": 1864415,
-    "similarity": 0.9999,
-    "rank": 1,
-    "rec_prediction": "view",
-    "strategy": "content_based_cosine"
-  },
-  {
-    "entity_idx": 3067,
-    "recommended_idx": 197729,
+    "entity_idx": 5336,
+    "recommended_idx": 337545,
     "similarity": 1.0,
+    "rank": 1,
+    "rec_prediction": "view",
+    "strategy": "content_based_cosine"
+  },
+  {
+    "entity_idx": 6163,
+    "recommended_idx": 256163,
+    "similarity": 1.0,
+    "rank": 1,
+    "rec_prediction": "view",
+    "strategy": "content_based_cosine"
+  },
+  {
+    "entity_idx": 6235,
+    "recommended_idx": 453389,
+    "similarity": 1.0,
+    "rank": 1,
+    "rec_prediction": "view",
+    "strategy": "content_based_cosine"
+  },
+  {
+    "entity_idx": 7672,
+    "recommended_idx": 2308081,
+    "similarity": 0.9999,
     "rank": 1,
     "rec_prediction": "view",
     "strategy": "content_based_cosine"
@@ -66,19 +66,25 @@
 
 ## AI Business Interpretation
 
-## Understanding Your Product Recommendation System
+## Recommendation System Explainer: Content-Based Filtering for E-Commerce
 
-**What the System Does**
+---
 
-This recommendation system analyzes your product catalog and identifies which products are most similar to one another based on seven product-level features — things like category, price range, brand, and product attributes. Using a technique called **cosine similarity**, it mathematically measures how "alike" two products are on a scale from 0 to 1, where 1 means nearly identical. From your 285 million user events, the system generated **3,000 targeted product pairings**, each with a similarity score. Looking at the sample output, scores are clustering extremely high — between **0.99 and 1.0** — which tells us the system is confidently matching products that are genuinely close substitutes or complements. Importantly, all top recommendations are predicted as **"view" events**, meaning the model expects users to browse these suggestions rather than immediately purchase them. This is a content-based strategy, so it relies entirely on *what products look like*, not on *how other users have behaved* — making it especially powerful for new products that have no purchase history yet.
+### What the System Does
 
-**How Business Teams Should Operationalize This**
+This recommendation system analyzes **product and user behavior data** from your platform's 285 million events to suggest the most relevant products to each user. The strategy used is called **content-based filtering**, which works by comparing products based on their own characteristics — things like category, price range, brand, and behavioral signals — using a mathematical measure called **cosine similarity**. Think of it like this: if two products score a similarity of 1.0 out of 1.0, they are virtually identical in profile. The system generated **3,000 ranked recommendations**, each paired with a predicted outcome — in this case, whether the interaction is likely to result in a **view, cart addition, or purchase**. Critically, looking at the sample output, almost every top-ranked recommendation is predicted as a **"view"** rather than a "cart" or "purchase." This tells us the system is currently very good at finding similar products users will look at, but it is not yet optimized to prioritize products users will actually **buy**.
 
-The "view" predictions are actually a **conversion funnel signal**, not a weakness — treat them as your top-of-funnel engagement layer. Concretely, your merchandising team should deploy these pairings in three places: **(1) "Similar Products" carousels** on product detail pages, particularly for high-margin SKUs where the similarity score exceeds 0.99; **(2) Abandoned browse re-engagement emails**, where a user viewed `entity_idx 2493` but left — you now have a near-perfect substitute (`recommended_idx 1864415`, similarity 0.9999) to feature in a follow-up campaign within 24 hours; and **(3) Out-of-stock substitution**, automatically surfacing the recommended product when a viewed item becomes unavailable. For your category managers, filter recommendations by product category to identify which categories have the densest similarity clusters — those are your best candidates for bundle promotions. Prioritize the rank-1 recommendations first, as these represent the single strongest match per product, and set a business threshold of **similarity ≥ 0.97** to ensure only high-confidence pairings reach customers.
+---
 
-**Limitations and What Would Make This Stronger**
+### How Business Teams Should Use These Recommendations Operationally
 
-The most critical limitation is that **this system cannot distinguish between a product a user will merely browse versus actually buy** — every recommendation in the sample predicts "view," which means the model is not yet optimized to drive purchase conversion directly. This happens because content-based filtering ignores behavioral patterns entirely; it does not know that users who viewed product A went on to purchase product B 40% of the time. To close this gap, three data enhancements would meaningfully improve performance: **(1) Incorporate user interaction sequences** — adding clickstream order and session time-on-page would let you build a hybrid model that layers collaborative signals on top of content similarity; **(2) Include purchase conversion labels** at the product-pair level — if you track which similar-product recommendations actually resulted in a cart or purchase event, you
+The most immediate application is **homepage and product page personalization**. When a user views a product — say, a pair of running shoes — the system can instantly surface the top-ranked similar products in a "You May Also Like" carousel, using the high-similarity scores (0.997–1.0) as a confidence filter to only show recommendations above a threshold you are comfortable with, such as 0.95. For the **merchandising team**, these recommendations can inform **cross-sell and upsell placement**: products with similarity scores near 1.0 are strong candidates for bundle promotions or "Frequently Bought Together" sections. For the **marketing team**, the `entity_idx` to `recommended_idx` mappings can be loaded directly into your email or push notification pipeline — if a user browsed product 2593 but did not purchase, you trigger a retargeting message featuring product 3265913 as the recommended alternative. One practical operational rule: since all current predictions are "view," **do not use these recommendations alone to drive high-cost interventions** like discount coupons or paid retargeting ads, as you would be spending budget on users likely to browse but not convert.
+
+---
+
+### Limitations and What Would Make This Stronger
+
+The most significant limitation visible right now is **prediction bias toward "view" events**. With 285 million events, purchase events almost certainly represent a small fraction — likely under 5% — of all interactions, which means the underlying classifier learned that predicting "view" is statistically safe. This is a **class imbalance problem**, and it directly limits your ability to identify true purchase-intent signals. To fix this, the modeling pipeline needs to apply resampling techniques and explicitly optimize for purchase prediction, not just overall accuracy. A second limitation is that content-based filtering is **blind to social proof and demand signals** — it does not know that a similar product has been added to 50,000 carts this week while another has zero traction. Incorporating **collaborative filtering signals** (
 
 ## How to Use
 ```python

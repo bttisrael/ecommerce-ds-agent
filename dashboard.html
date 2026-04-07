@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Event Type — Business Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
+    font-family: 'Inter', sans-serif;
     background: #0f1117;
     color: #e2e8f0;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
     min-height: 100vh;
     padding: 2rem 1rem;
   }
@@ -26,39 +27,49 @@
   .header {
     margin-bottom: 2rem;
   }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
   .header h1 {
     font-size: clamp(1.4rem, 3vw, 2rem);
     font-weight: 700;
     color: #f1f5f9;
-    margin-bottom: 0.5rem;
-    letter-spacing: -0.02em;
+    line-height: 1.2;
   }
-  .header .subtitle {
-    color: #64748b;
-    font-size: 0.875rem;
-    margin-bottom: 0.75rem;
-    line-height: 1.5;
-  }
-  .badge {
+
+  .model-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     background: #1e2130;
     border: 1px solid #2d3448;
     color: #4f8ef7;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    padding: 0.3rem 0.75rem;
+    padding: 0.35rem 0.85rem;
     border-radius: 999px;
-    letter-spacing: 0.02em;
+    white-space: nowrap;
   }
-  .badge::before {
-    content: '';
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    background: #4f8ef7;
-    border-radius: 50%;
+
+  .model-badge::before {
+    content: '●';
+    color: #22c55e;
+    font-size: 0.6rem;
+  }
+
+  .header-subtitle {
+    color: #64748b;
+    font-size: 0.85rem;
+    max-width: 720px;
+    line-height: 1.5;
+    margin-top: 0.4rem;
   }
 
   /* CARDS */
@@ -66,30 +77,34 @@
     background: #1e2130;
     border: 1px solid #2d3448;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.25rem 1.5rem;
   }
 
-  /* KPI GRID */
+  /* KPI ROW */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-  @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 420px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
 
   .kpi-card {
     background: #1e2130;
     border: 1px solid #2d3448;
     border-radius: 12px;
     padding: 1.25rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
     position: relative;
     overflow: hidden;
   }
+
   .kpi-card::before {
     content: '';
     position: absolute;
@@ -97,187 +112,221 @@
     height: 3px;
     border-radius: 12px 12px 0 0;
   }
-  .kpi-card:nth-child(1)::before { background: #4f8ef7; }
-  .kpi-card:nth-child(2)::before { background: #22c55e; }
-  .kpi-card:nth-child(3)::before { background: #f59e0b; }
-  .kpi-card:nth-child(4)::before { background: #818cf8; }
+
+  .kpi-card.blue::before { background: #4f8ef7; }
+  .kpi-card.green::before { background: #22c55e; }
+  .kpi-card.amber::before { background: #f59e0b; }
+  .kpi-card.purple::before { background: #818cf8; }
 
   .kpi-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .kpi-value {
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    font-weight: 700;
-    color: #f1f5f9;
-    line-height: 1.2;
-  }
-  .kpi-card:nth-child(1) .kpi-value { color: #4f8ef7; }
-  .kpi-card:nth-child(2) .kpi-value { color: #22c55e; }
-  .kpi-card:nth-child(3) .kpi-value { color: #f59e0b; }
-  .kpi-card:nth-child(4) .kpi-value { color: #818cf8; }
-  .kpi-sub {
-    font-size: 0.75rem;
-    color: #475569;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
   }
 
-  /* CHARTS ROW */
-  .charts-row {
+  .kpi-value {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 700;
+    color: #f1f5f9;
+    line-height: 1;
+  }
+
+  .kpi-value.blue { color: #4f8ef7; }
+  .kpi-value.green { color: #22c55e; }
+  .kpi-value.amber { color: #f59e0b; }
+  .kpi-value.purple { color: #818cf8; }
+
+  .kpi-sub {
+    font-size: 0.72rem;
+    color: #475569;
+    margin-top: 0.35rem;
+  }
+
+  /* CHARTS GRID */
+  .charts-grid {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: 1rem;
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
   }
-  @media (max-width: 750px) { .charts-row { grid-template-columns: 1fr; } }
+
+  @media (max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
 
   .chart-card {
     background: #1e2130;
     border: 1px solid #2d3448;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.25rem 1.5rem;
   }
+
   .chart-title {
     font-size: 0.85rem;
     font-weight: 600;
     color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 1.25rem;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
   }
+
   .chart-container {
     height: 280px;
     position: relative;
   }
 
-  /* INSIGHTS GRID */
-  .section-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 1rem;
+  .doughnut-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
   }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* INSIGHTS GRID */
   .insights-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-  @media (max-width: 620px) { .insights-grid { grid-template-columns: 1fr; } }
+
+  @media (max-width: 640px) {
+    .insights-grid { grid-template-columns: 1fr; }
+  }
 
   .insight-card {
     background: #1e2130;
     border: 1px solid #2d3448;
     border-radius: 12px;
     padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-    border-left-width: 4px;
-    border-left-style: solid;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    border-left: 4px solid;
+    position: relative;
   }
-  .insight-card:nth-child(1) { border-left-color: #4f8ef7; }
-  .insight-card:nth-child(2) { border-left-color: #22c55e; }
-  .insight-card:nth-child(3) { border-left-color: #f59e0b; }
-  .insight-card:nth-child(4) { border-left-color: #ef4444; }
+
+  .insight-card.accent { border-left-color: #4f8ef7; }
+  .insight-card.success { border-left-color: #22c55e; }
+  .insight-card.warning { border-left-color: #f59e0b; }
+  .insight-card.danger { border-left-color: #ef4444; }
 
   .insight-title {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #f1f5f9;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
+
+  .insight-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
   .insight-body {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #94a3b8;
     line-height: 1.6;
   }
 
   /* HYPOTHESIS TABLE */
-  .table-section {
-    margin-bottom: 1.5rem;
+  .section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
   }
-  .table-wrapper {
-    background: #1e2130;
-    border: 1px solid #2d3448;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .table-scroll {
+
+  .table-wrap {
+    overflow-x: auto;
     max-height: 420px;
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #2d3448 transparent;
+    border-radius: 8px;
+    border: 1px solid #2d3448;
   }
-  .table-scroll::-webkit-scrollbar { width: 6px; }
-  .table-scroll::-webkit-scrollbar-track { background: transparent; }
-  .table-scroll::-webkit-scrollbar-thumb { background: #2d3448; border-radius: 3px; }
+
+  .table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-wrap::-webkit-scrollbar-track { background: #1e2130; }
+  .table-wrap::-webkit-scrollbar-thumb { background: #2d3448; border-radius: 3px; }
 
   table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 0.82rem;
   }
-  thead {
+
+  thead th {
+    background: #161b2e;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+    text-align: left;
     position: sticky;
     top: 0;
     z-index: 1;
-    background: #161825;
   }
-  thead th {
-    padding: 0.75rem 1rem;
-    text-align: left;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    border-bottom: 1px solid #2d3448;
-    white-space: nowrap;
-  }
+
   tbody tr {
+    border-bottom: 1px solid #2d3448;
     transition: background 0.15s;
   }
-  tbody tr:nth-child(even) { background: #181c2c; }
-  tbody tr:hover { background: #222840; }
-  tbody td {
-    padding: 0.75rem 1rem;
-    font-size: 0.78rem;
-    color: #94a3b8;
-    border-bottom: 1px solid #1a1f32;
+
+  tbody tr:nth-child(even) { background: #1a1f33; }
+  tbody tr:hover { background: #252b42; }
+
+  td {
+    padding: 0.7rem 1rem;
+    color: #cbd5e1;
     vertical-align: top;
-    line-height: 1.5;
   }
-  tbody tr:last-child td { border-bottom: none; }
-  .td-id {
-    color: #4f8ef7;
+
+  td.id-cell {
     font-weight: 700;
+    color: #4f8ef7;
     white-space: nowrap;
-    min-width: 40px;
   }
-  .td-statement { min-width: 220px; max-width: 320px; }
-  .td-insight { min-width: 200px; max-width: 300px; }
+
+  td.hyp-cell { max-width: 280px; }
+  td.insight-cell { max-width: 280px; }
 
   .verdict-badge {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
     border-radius: 999px;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
     white-space: nowrap;
   }
+
   .verdict-true { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
   .verdict-false { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
-  .verdict-inconclusive { background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+  .verdict-inconclusive { background: rgba(100,116,139,0.15); color: #64748b; border: 1px solid rgba(100,116,139,0.3); }
 
-  /* CAT BREAKDOWN */
+  /* CATEGORY CHART */
   .cat-section {
     margin-bottom: 1.5rem;
   }
@@ -289,9 +338,22 @@
     border-top: 1px solid #2d3448;
     color: #475569;
     font-size: 0.75rem;
-    line-height: 1.8;
+    line-height: 1.6;
   }
-  .footer strong { color: #64748b; }
+
+  .footer strong {
+    color: #64748b;
+  }
+
+  /* DIVIDER */
+  .section-wrap {
+    margin-bottom: 1.5rem;
+  }
+
+  /* Scrollbar global */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #2d3448; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -299,42 +361,45 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1 id="dash-title"></h1>
-    <p class="subtitle" id="dash-subtitle"></p>
-    <span class="badge" id="dash-badge"></span>
+    <div class="header-top">
+      <h1 id="dash-title"></h1>
+      <span class="model-badge" id="model-badge"></span>
+    </div>
+    <p class="header-subtitle" id="header-subtitle"></p>
   </div>
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
-    <div class="kpi-card">
+    <div class="kpi-card blue">
       <div class="kpi-label">Total Records</div>
-      <div class="kpi-value" id="kpi-total"></div>
-      <div class="kpi-sub">Analyzed events</div>
+      <div class="kpi-value blue" id="kpi-total"></div>
+      <div class="kpi-sub">Events analyzed</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card green">
       <div class="kpi-label">Model Accuracy</div>
-      <div class="kpi-value" id="kpi-accuracy"></div>
-      <div class="kpi-sub" id="kpi-accuracy-sub"></div>
+      <div class="kpi-value green" id="kpi-accuracy"></div>
+      <div class="kpi-sub" id="kpi-model-name"></div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card amber">
       <div class="kpi-label">Avg Confidence</div>
-      <div class="kpi-value" id="kpi-conf"></div>
-      <div class="kpi-sub">Prediction confidence</div>
+      <div class="kpi-value amber" id="kpi-conf"></div>
+      <div class="kpi-sub">Mean prediction confidence</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card purple">
       <div class="kpi-label">True Hypotheses</div>
-      <div class="kpi-value" id="kpi-hyp"></div>
-      <div class="kpi-sub" id="kpi-hyp-sub"></div>
+      <div class="kpi-value purple" id="kpi-hyp"></div>
+      <div class="kpi-sub">Validated hypotheses</div>
     </div>
   </div>
 
   <!-- CHARTS ROW -->
-  <div class="charts-row">
+  <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-title">Prediction Distribution</div>
       <div class="chart-container">
         <canvas id="doughnutChart"></canvas>
       </div>
+      <div class="doughnut-legend" id="doughnut-legend"></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Feature Importance</div>
@@ -345,15 +410,17 @@
   </div>
 
   <!-- BUSINESS INSIGHTS -->
-  <div class="section-title">Business Insights</div>
-  <div class="insights-grid" id="insights-grid"></div>
+  <div class="section-wrap">
+    <div class="section-title">Business Insights</div>
+    <div class="insights-grid" id="insights-grid"></div>
+  </div>
 
   <!-- HYPOTHESIS TABLE -->
-  <div class="table-section">
+  <div class="section-wrap">
     <div class="section-title">Hypothesis Validation</div>
-    <div class="table-wrapper">
-      <div class="table-scroll">
-        <table>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div class="table-wrap">
+        <table id="hyp-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -370,9 +437,9 @@
 
   <!-- CATEGORY BREAKDOWN (conditional) -->
   <div class="cat-section" id="cat-section" style="display:none;">
-    <div class="section-title" id="cat-title"></div>
     <div class="chart-card">
-      <div class="chart-container" style="height:320px;">
+      <div class="chart-title" id="cat-title"></div>
+      <div class="chart-container">
         <canvas id="catChart"></canvas>
       </div>
     </div>
@@ -381,95 +448,161 @@
   <!-- FOOTER -->
   <div class="footer">
     <strong>Generated by Auto Data Scientist v7 · CrewAI + Claude 4.6 Sonnet</strong><br>
-    <span id="gen-time"></span>
+    <span id="footer-ts"></span>
   </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const DATA = {
   "title": "Event Type \u2014 Business Dashboard",
   "context": "# business_context.txt\necho \"E-commerce platform with 285M user events. Goal: predict whether a user \nwill purchase a product based on their browsing behavior (view, cart, purchase). \nKey business questions: which products to recommend, which users are likely to \nconvert, and which product categories drive the most revenue.\"",
   "model_name": "XGBoost",
   "metric_label": "Accuracy",
-  "metric_value": 97.02,
-  "total_rows": 2000000,
-  "avg_conf": 97.0,
+  "metric_value": 97.25,
+  "total_rows": 5000000,
+  "avg_conf": 97.2,
   "pred_dist": {
-    "view": 2000000
+    "view": 4999615,
+    "cart": 385
   },
   "feat_imp": {
-    "feat_interact": 0.37959998846054077,
-    "price": 0.22750000655651093,
-    "price_zscore_abs": 0.1738000065088272,
-    "price_product_log_interact": 0.1234000027179718,
-    "feat_product": 0.08389999717473984,
-    "user_price_ratio": 0.011800000444054604,
-    "log_price": 0.0
+    "feat_interact": 0.34700000286102295,
+    "price": 0.26669999957084656,
+    "price_quantile": 0.15770000219345093,
+    "feat_product": 0.14169999957084656,
+    "user_price_ratio": 0.0869000032544136
   },
   "hypotheses": [
-    {"id":"H1","verdict":"FALSE","statement":"Users with higher 'price' products in their sessions tend to have lower purchase event_type rates, a","insight":"Price alone does not deter purchases, and mid-to-high priced products may attract more intent-driven shoppers, suggestin"},
-    {"id":"H2","verdict":"FALSE","statement":"Users with higher 'feat_ratio' (engineered feature) tend to have higher purchase event_type rates, s","insight":"Users with lower feat_ratio values are actually stronger purchase intent signals, meaning the feature should be inverted"},
-    {"id":"H3","verdict":"FALSE","statement":"Users with higher 'feat_sum' values tend to have higher purchase event_type rates, as aggregated fea","insight":"Mid-range engaged users (Q2) are the most likely to purchase, suggesting that very high feature interaction may indicate"},
-    {"id":"H4","verdict":"FALSE","statement":"Sessions/Events with extreme 'price_zscore_abs' (far from mean price) tend to have lower purchase ev","insight":"Unusually priced items do not systematically deter purchases, suggesting customers may be motivated by both bargains and"},
-    {"id":"H5","verdict":"INCONCLUSIVE","statement":"Events associated with specific 'brand' values tend to have significantly different purchase event_t","insight":"Oral-b and tyrex show the highest conversion rates among displayed brands, suggesting focused marketing investment in th"},
-    {"id":"H6","verdict":"TRUE","statement":"Events from specific 'category_code' values tend to have higher purchase event_type rates, as certai","insight":"The business should prioritize marketing spend and inventory optimization for high-converting categories like headphones"},
-    {"id":"H7","verdict":"FALSE","statement":"Users with higher 'user_price_ratio' tend to have higher purchase event_type rates, indicating that ","insight":"Price-to-user-budget alignment does not appear to be a meaningful driver of purchase conversion, suggesting the business"},
-    {"id":"H8","verdict":"FALSE","statement":"Events with higher 'log_price' values tend to have lower purchase event_type rates, as logarithmical","insight":"Price alone does not linearly drive conversion behavior, suggesting other factors like product category, brand perceptio"},
-    {"id":"H9","verdict":"FALSE","statement":"Events with higher 'feat_interact' values tend to have higher purchase event_type rates, suggesting ","insight":"Lower feat_interact values are actually stronger predictors of purchase intent, so the model or targeting strategy shoul"},
-    {"id":"H10","verdict":"FALSE","statement":"Users with higher 'price_per_product_magnitude' tend to have lower purchase event_type rates, as pro","insight":"Outlier pricing relative to product magnitude does not discourage purchases, suggesting customers may actually be drawn "}
+    {
+      "id": "H1",
+      "verdict": "TRUE",
+      "statement": "Users with a higher 'price_zscore' (premium-priced products) tend to have a lower likelihood of 'pur",
+      "insight": "Extremely high-priced products are almost exclusively browsed and rarely purchased, suggesting the business should consi"
+    },
+    {
+      "id": "H2",
+      "verdict": "FALSE",
+      "statement": "Products with a higher 'feat_ratio' (engineered feature capturing relative product characteristics) ",
+      "insight": "Products with lower feat_ratio values are actually more likely to convert to purchases, suggesting the business should p"
+    },
+    {
+      "id": "H3",
+      "verdict": "FALSE",
+      "statement": "Users with a lower 'user_price_ratio' (user's interaction price relative to a baseline) tend to have",
+      "insight": "Higher-spending, premium-oriented users are actually the most valuable converters, suggesting the business should priori"
+    },
+    {
+      "id": "H4",
+      "verdict": "FALSE",
+      "statement": "Products associated with specific 'brand' values tend to have significantly different 'purchase' eve",
+      "insight": "Since purchase conversion rates are remarkably consistent across brands regardless of their market prominence, the busin"
+    },
+    {
+      "id": "H5",
+      "verdict": "FALSE",
+      "statement": "Products in certain 'category_code' segments (e.g., electronics vs. apparel) tend to have higher 'pu",
+      "insight": "Stationery and electronics drive the highest purchase conversion rates, suggesting marketing and inventory investment sh"
+    },
+    {
+      "id": "H6",
+      "verdict": "FALSE",
+      "statement": "Products with a higher 'category_deviation' (price deviation from category average) tend to have low",
+      "insight": "Products priced near the category average convert best, but premium-priced items still outperform below-average priced o"
+    },
+    {
+      "id": "H7",
+      "verdict": "FALSE",
+      "statement": "Users with higher 'feat_interact' values (interaction feature combining product and category signals",
+      "insight": "The feat_interact feature appears to capture disengagement or browse-without-buy behavior rather than conversion intent,"
+    },
+    {
+      "id": "H8",
+      "verdict": "FALSE",
+      "statement": "Events occurring in certain 'price_bucket_x_log_product' segments tend to have significantly higher ",
+      "insight": "The interaction feature between price bucket and log product popularity does not meaningfully differentiate purchase pro"
+    },
+    {
+      "id": "H9",
+      "verdict": "FALSE",
+      "statement": "Products with lower 'price_quantile' values (i.e., positioned in the cheapest tier of the price dist",
+      "insight": "Since mid-priced products drive the highest conversion rates, the business should focus marketing and inventory investme"
+    },
+    {
+      "id": "H10",
+      "verdict": "FALSE",
+      "statement": "User sessions ('user_session') with higher 'feat_sum' values (aggregate session-level feature) tend ",
+      "insight": "Sessions with moderate product interaction signals convert better than those with the highest browsing depth, suggesting"
+    }
   ],
   "insights": [
-    {"title":"Model Predicts Buyers With 97% Accuracy","body":"Our XGBoost model correctly identifies whether a user will view, add to cart, or purchase with 97% accuracy across 2 million analyzed events. This level of precision means marketing and merchandising decisions can now be driven by predictive data rather than gut instinct, reducing wasted spend and missed revenue opportunities."},
-    {"title":"Price Is the #1 Purchase Driver","body":"Across all behavioral signals, price and price-related features dominate the model as the strongest predictors of whether a user converts. This tells us customers are highly price-sensitive, and targeted pricing strategies or timely discounts could meaningfully lift conversion rates for users showing high purchase intent."},
-    {"title":"Category Selection Unlocks Hidden Revenue","body":"Validated data confirms that specific product categories generate disproportionately higher purchase rates than others. Doubling down on inventory, promotions, and recommendation placement within these high-converting categories represents one of the fastest paths to incremental revenue growth."},
-    {"title":"Interaction Behavior Signals Buying Intent","body":"User interaction patterns, captured in our top-ranked engagement feature, are a powerful early indicator of purchase likelihood before a user ever reaches the cart. By identifying these behavioral signals in real time, we can trigger personalized recommendations or incentives at exactly the right moment to close the sale."}
+    {
+      "title": "Model Accuracy Masks Critical Imbalance",
+      "body": "The XGBoost model reports 97% accuracy, but this figure is misleading. Out of 5 million events, only 385 were cart additions, meaning the model is essentially predicting \"view\" almost every time and still looking accurate. True conversion intelligence requires retraining with balanced data before any business decisions should rely on these predictions."
+    },
+    {
+      "title": "Price Is the #1 Purchase Driver",
+      "body": "Price and price-related features dominate the model's decision-making, appearing in four of the top five predictors. Users encountering premium-priced products show significantly lower conversion likelihood, confirming that price sensitivity is the central barrier to purchase. Targeted discounting or installment options for high-value products could directly unlock suppressed conversion."
+    },
+    {
+      "title": "Browsing Does Not Equal Buying Intent",
+      "body": "With 4.99 million views versus 385 cart events, the platform is generating enormous traffic that almost never converts. This signals a fundamental gap between product discovery and purchase intent, likely driven by pricing friction or weak calls to action. Closing this gap by even a fraction of a percent would represent millions in incremental revenue."
+    },
+    {
+      "title": "Personalization Must Lead With Price Signals",
+      "body": "The user-price ratio feature ranking in the top five reveals that individual affordability context matters more than product popularity alone. Recommendation engines should prioritize surfacing products within a user's demonstrated price comfort zone rather than simply promoting high-margin or high-traffic items. This shift in recommendation logic is the fastest path to measurable conversion improvement."
+    }
   ],
   "cat_breakdown": {},
   "true_hyp_count": 1,
-  "false_hyp_count": 8,
-  "inc_hyp_count": 1
+  "false_hyp_count": 9,
+  "inc_hyp_count": 0
 };
 
-// ─── CHART DEFAULTS ───────────────────────────────────────────────────────────
+// ── Utility ──────────────────────────────────────────────────────────────────
+function fmt(n) {
+  return Number(n).toLocaleString();
+}
+
+function truncate(str, len) {
+  const s = str.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  return s.length > len ? s.slice(0, len) + '…' : s;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+document.getElementById('dash-title').textContent = DATA.title;
+document.getElementById('header-subtitle').textContent = truncate(DATA.context, 120);
+document.getElementById('model-badge').textContent =
+  DATA.model_name + ' · ' + DATA.metric_label + ' ' + DATA.metric_value + '%';
+
+// ── KPI Cards ─────────────────────────────────────────────────────────────────
+document.getElementById('kpi-total').textContent = fmt(DATA.total_rows);
+document.getElementById('kpi-accuracy').textContent = DATA.metric_value + '%';
+document.getElementById('kpi-model-name').textContent = DATA.model_name + ' model';
+document.getElementById('kpi-conf').textContent =
+  (DATA.avg_conf !== null && DATA.avg_conf !== undefined) ? DATA.avg_conf + '%' : 'N/A';
+const totalHyp = DATA.hypotheses.length;
+document.getElementById('kpi-hyp').textContent = DATA.true_hyp_count + '/' + totalHyp;
+
+// ── Chart defaults ────────────────────────────────────────────────────────────
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.font.family = 'Inter, sans-serif';
-Chart.defaults.font.size = 12;
 
-// ─── HEADER ───────────────────────────────────────────────────────────────────
-document.getElementById('dash-title').textContent = DATA.title;
-
-const rawCtx = DATA.context.replace(/\n/g, ' ').replace(/^#[^\n]*\n?/, '').replace(/echo\s+"?/, '').replace(/"$/, '').trim();
-const subtitle = rawCtx.length > 120 ? rawCtx.slice(0, 117) + '…' : rawCtx;
-document.getElementById('dash-subtitle').textContent = subtitle;
-document.getElementById('dash-badge').textContent = `${DATA.model_name} · ${DATA.metric_label} ${DATA.metric_value}%`;
-
-// ─── KPI CARDS ────────────────────────────────────────────────────────────────
-document.getElementById('kpi-total').textContent = DATA.total_rows.toLocaleString();
-document.getElementById('kpi-accuracy').textContent = DATA.metric_value + '%';
-document.getElementById('kpi-accuracy-sub').textContent = DATA.metric_label + ' score';
-document.getElementById('kpi-conf').textContent = DATA.avg_conf != null ? DATA.avg_conf + '%' : 'N/A';
-const totalHyp = DATA.true_hyp_count + DATA.false_hyp_count + DATA.inc_hyp_count;
-document.getElementById('kpi-hyp').textContent = `${DATA.true_hyp_count}/${totalHyp}`;
-document.getElementById('kpi-hyp-sub').textContent = `${DATA.false_hyp_count} false · ${DATA.inc_hyp_count} inconclusive`;
-
-// ─── DOUGHNUT CHART ──────────────────────────────────────────────────────────
+// ── Doughnut Chart ────────────────────────────────────────────────────────────
 (function() {
   const labels = Object.keys(DATA.pred_dist);
   const values = Object.values(DATA.pred_dist);
+  const palette = ['#22c55e', '#ef4444', '#4f8ef7', '#f59e0b', '#818cf8', '#06b6d4'];
 
-  const palette = [
-    '#22c55e','#ef4444','#4f8ef7','#f59e0b','#818cf8',
-    '#06b6d4','#ec4899','#a3e635','#fb923c','#e879f9'
-  ];
-
-  const colors = labels.map((lbl, i) => {
-    const l = lbl.toLowerCase();
-    if (l === '0' || l === 'on time' || l === 'view') return '#4f8ef7';
-    if (l === '1' || l === 'late' || l === 'purchase') return '#22c55e';
-    if (l === 'cart') return '#f59e0b';
-    return palette[i % palette.length];
+  const legendEl = document.getElementById('doughnut-legend');
+  labels.forEach(function(lbl, i) {
+    const color = palette[i % palette.length];
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML =
+      '<div class="legend-dot" style="background:' + color + '"></div>' +
+      '<span>' + lbl + ' (' + fmt(values[i]) + ')</span>';
+    legendEl.appendChild(item);
   });
 
   const ctx = document.getElementById('doughnutChart').getContext('2d');
@@ -479,7 +612,7 @@ document.getElementById('kpi-hyp-sub').textContent = `${DATA.false_hyp_count} fa
       labels: labels,
       datasets: [{
         data: values,
-        backgroundColor: colors,
+        backgroundColor: labels.map(function(_, i) { return palette[i % palette.length]; }),
         borderColor: '#1e2130',
         borderWidth: 3,
         hoverOffset: 6
@@ -488,42 +621,38 @@ document.getElementById('kpi-hyp-sub').textContent = `${DATA.false_hyp_count} fa
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '65%',
+      cutout: '68%',
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            padding: 16,
-            usePointStyle: true,
-            pointStyleWidth: 10,
-            font: { size: 12 },
-            color: '#94a3b8'
-          }
-        },
+        legend: { display: false },
         tooltip: {
           callbacks: {
             label: function(ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              const pct = ((ctx.parsed / total) * 100).toFixed(1);
-              return ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${pct}%)`;
+              const total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(2);
+              return ' ' + ctx.label + ': ' + fmt(ctx.parsed) + ' (' + pct + '%)';
             }
-          }
+          },
+          backgroundColor: '#161b2e',
+          borderColor: '#2d3448',
+          borderWidth: 1,
+          titleColor: '#f1f5f9',
+          bodyColor: '#94a3b8',
+          padding: 10
         }
       }
     }
   });
 })();
 
-// ─── FEATURE IMPORTANCE BAR ──────────────────────────────────────────────────
+// ── Horizontal Bar Chart ──────────────────────────────────────────────────────
 (function() {
-  const entries = Object.entries(DATA.feat_imp)
-    .sort((a, b) => b[1] - a[1]);
-
-  const labels = entries.map(e => e[0]);
-  const values = entries.map(e => e[1]);
+  const entries = Object.entries(DATA.feat_imp).sort(function(a, b) { return a[1] - b[1]; });
+  const labels = entries.map(function(e) { return e[0]; });
+  const values = entries.map(function(e) { return e[1]; });
 
   const ctx = document.getElementById('barChart').getContext('2d');
 
+  // Gradient
   const grad = ctx.createLinearGradient(0, 0, 400, 0);
   grad.addColorStop(0, '#4f8ef7');
   grad.addColorStop(1, '#818cf8');
@@ -538,7 +667,7 @@ document.getElementById('kpi-hyp-sub').textContent = `${DATA.false_hyp_count} fa
         backgroundColor: grad,
         borderRadius: 5,
         borderSkipped: false,
-        barThickness: 18
+        barThickness: 22
       }]
     },
     options: {
@@ -549,79 +678,86 @@ document.getElementById('kpi-hyp-sub').textContent = `${DATA.false_hyp_count} fa
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => ` ${ctx.parsed.x.toFixed(4)}`
-          }
+            label: function(ctx) {
+              return ' ' + ctx.parsed.x.toFixed(4);
+            }
+          },
+          backgroundColor: '#161b2e',
+          borderColor: '#2d3448',
+          borderWidth: 1,
+          titleColor: '#f1f5f9',
+          bodyColor: '#94a3b8',
+          padding: 10
         }
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: 'Importance Score',
-            color: '#64748b',
-            font: { size: 11 }
-          },
+          title: { display: true, text: 'Importance Score', color: '#64748b', font: { size: 11 } },
           grid: { color: '#2d3448' },
           ticks: { color: '#64748b' }
         },
         y: {
           grid: { display: false },
-          ticks: {
-            color: '#94a3b8',
-            font: { size: 11 }
-          }
+          ticks: { color: '#94a3b8', font: { size: 12 } }
         }
       }
     }
   });
 })();
 
-// ─── INSIGHTS GRID ───────────────────────────────────────────────────────────
+// ── Business Insights ─────────────────────────────────────────────────────────
 (function() {
   const icons = ['📊', '🎯', '⚡', '💡'];
+  const classes = ['accent', 'success', 'warning', 'danger'];
   const grid = document.getElementById('insights-grid');
-  DATA.insights.forEach((ins, i) => {
+
+  DATA.insights.forEach(function(ins, i) {
     const card = document.createElement('div');
-    card.className = 'insight-card';
-    card.innerHTML = `
-      <div class="insight-title">${icons[i % icons.length]} ${ins.title}</div>
-      <div class="insight-body">${ins.body}</div>
-    `;
+    card.className = 'insight-card ' + classes[i % classes.length];
+    card.innerHTML =
+      '<div class="insight-title">' +
+      '<span class="insight-icon">' + icons[i % icons.length] + '</span>' +
+      '<span>' + ins.title + '</span>' +
+      '</div>' +
+      '<div class="insight-body">' + ins.body + '</div>';
     grid.appendChild(card);
   });
 })();
 
-// ─── HYPOTHESIS TABLE ────────────────────────────────────────────────────────
+// ── Hypothesis Table ──────────────────────────────────────────────────────────
 (function() {
   const tbody = document.getElementById('hyp-tbody');
-  DATA.hypotheses.forEach(h => {
-    const tr = document.createElement('tr');
-    const verdictClass = h.verdict === 'TRUE'
-      ? 'verdict-true'
-      : h.verdict === 'FALSE'
-      ? 'verdict-false'
-      : 'verdict-inconclusive';
 
-    tr.innerHTML = `
-      <td class="td-id">${h.id}</td>
-      <td><span class="verdict-badge ${verdictClass}">${h.verdict}</span></td>
-      <td class="td-statement">${h.statement}</td>
-      <td class="td-insight">${h.insight}</td>
-    `;
+  DATA.hypotheses.forEach(function(h) {
+    const tr = document.createElement('tr');
+
+    let badgeClass = 'verdict-inconclusive';
+    if (h.verdict === 'TRUE') badgeClass = 'verdict-true';
+    else if (h.verdict === 'FALSE') badgeClass = 'verdict-false';
+
+    tr.innerHTML =
+      '<td class="id-cell">' + h.id + '</td>' +
+      '<td><span class="verdict-badge ' + badgeClass + '">' + h.verdict + '</span></td>' +
+      '<td class="hyp-cell">' + h.statement + '</td>' +
+      '<td class="insight-cell">' + h.insight + '</td>';
+
     tbody.appendChild(tr);
   });
 })();
 
-// ─── CATEGORY BREAKDOWN ──────────────────────────────────────────────────────
+// ── Category Breakdown ────────────────────────────────────────────────────────
 (function() {
-  if (!DATA.cat_breakdown || !DATA.cat_breakdown.column || !DATA.cat_breakdown.data) return;
+  if (!DATA.cat_breakdown || !DATA.cat_breakdown.column || !DATA.cat_breakdown.data) {
+    return;
+  }
+
   const section = document.getElementById('cat-section');
   section.style.display = 'block';
-  document.getElementById('cat-title').textContent = 'Late Rate by ' + DATA.cat_breakdown.column;
+  document.getElementById('cat-title').textContent =
+    'Late Rate by ' + DATA.cat_breakdown.column;
 
-  const catData = DATA.cat_breakdown.data;
-  const labels = Object.keys(catData);
-  const values = Object.values(catData).map(v => parseFloat((v * 100).toFixed(2)));
+  const labels = Object.keys(DATA.cat_breakdown.data);
+  const values = Object.values(DATA.cat_breakdown.data);
 
   const ctx = document.getElementById('catChart').getContext('2d');
   new Chart(ctx, {
@@ -633,41 +769,4 @@ document.getElementById('kpi-hyp-sub').textContent = `${DATA.false_hyp_count} fa
         data: values,
         backgroundColor: '#4f8ef7',
         borderRadius: 5,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.parsed.y.toFixed(2)}%`
-          }
-        }
-      },
-      scales: {
-        y: {
-          min: 0,
-          max: 100,
-          ticks: {
-            color: '#64748b',
-            callback: v => v + '%'
-          },
-          grid: { color: '#2d3448' }
-        },
-        x: {
-          ticks: { color: '#94a3b8' },
-          grid: { display: false }
-        }
-      }
-    }
-  });
-})();
-
-// ─── FOOTER TIMESTAMP ────────────────────────────────────────────────────────
-document.getElementById('gen-time').textContent = 'Generated on ' + new Date().toLocaleString();
-</script>
-</body>
-</html>
+        barTh
