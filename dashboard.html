@@ -4,12 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Event Type — Business Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Inter', sans-serif;
     background: #0f1117;
@@ -17,167 +14,114 @@
     min-height: 100vh;
     padding: 2rem 1rem;
   }
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
+  .container { max-width: 1200px; margin: 0 auto; }
 
   /* HEADER */
   .header {
     margin-bottom: 2rem;
   }
-
-  .header-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-  }
-
   .header h1 {
-    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-size: 1.75rem;
     font-weight: 700;
     color: #f1f5f9;
+    margin-bottom: 0.5rem;
     line-height: 1.2;
   }
-
-  .model-badge {
+  .header .subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+  .badge {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     background: #1e2130;
-    border: 1px solid #2d3448;
-    color: #4f8ef7;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 0.35rem 0.85rem;
+    border: 1px solid #2d3748;
     border-radius: 999px;
-    white-space: nowrap;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.78rem;
+    color: #4f8ef7;
+    font-weight: 600;
   }
-
-  .model-badge::before {
+  .badge::before {
     content: '●';
+    font-size: 0.55rem;
     color: #22c55e;
-    font-size: 0.6rem;
   }
 
-  .header-subtitle {
-    color: #64748b;
-    font-size: 0.85rem;
-    max-width: 720px;
-    line-height: 1.5;
-    margin-top: 0.4rem;
-  }
-
-  /* CARDS */
-  .card {
-    background: #1e2130;
-    border: 1px solid #2d3448;
-    border-radius: 12px;
-    padding: 1.25rem 1.5rem;
-  }
-
-  /* KPI ROW */
+  /* KPI CARDS */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
-
-  @media (max-width: 768px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  @media (max-width: 420px) {
-    .kpi-grid { grid-template-columns: 1fr; }
-  }
-
+  @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
   .kpi-card {
     background: #1e2130;
-    border: 1px solid #2d3448;
     border-radius: 12px;
     padding: 1.25rem 1.5rem;
+    border: 1px solid #2d3748;
     position: relative;
     overflow: hidden;
   }
-
   .kpi-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
+    background: var(--accent, #4f8ef7);
     border-radius: 12px 12px 0 0;
   }
-
-  .kpi-card.blue::before { background: #4f8ef7; }
-  .kpi-card.green::before { background: #22c55e; }
-  .kpi-card.amber::before { background: #f59e0b; }
-  .kpi-card.purple::before { background: #818cf8; }
-
-  .kpi-label {
+  .kpi-card .kpi-label {
     font-size: 0.75rem;
-    font-weight: 600;
     color: #64748b;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 0.5rem;
   }
-
-  .kpi-value {
-    font-size: clamp(1.4rem, 2.5vw, 2rem);
+  .kpi-card .kpi-value {
+    font-size: 1.8rem;
     font-weight: 700;
     color: #f1f5f9;
     line-height: 1;
+    margin-bottom: 0.25rem;
   }
-
-  .kpi-value.blue { color: #4f8ef7; }
-  .kpi-value.green { color: #22c55e; }
-  .kpi-value.amber { color: #f59e0b; }
-  .kpi-value.purple { color: #818cf8; }
-
-  .kpi-sub {
-    font-size: 0.72rem;
+  .kpi-card .kpi-sub {
+    font-size: 0.75rem;
     color: #475569;
-    margin-top: 0.35rem;
   }
 
-  /* CHARTS GRID */
-  .charts-grid {
+  /* CHARTS ROW */
+  .charts-row {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 1rem;
+    margin-bottom: 2rem;
   }
-
-  @media (max-width: 768px) {
-    .charts-grid { grid-template-columns: 1fr; }
-  }
-
-  .chart-card {
+  @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+  .card {
     background: #1e2130;
-    border: 1px solid #2d3448;
     border-radius: 12px;
-    padding: 1.25rem 1.5rem;
+    border: 1px solid #2d3748;
+    padding: 1.5rem;
   }
-
-  .chart-title {
-    font-size: 0.85rem;
+  .card-title {
+    font-size: 0.875rem;
     font-weight: 600;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
-
   .chart-container {
     height: 280px;
     position: relative;
   }
-
   .doughnut-legend {
     display: flex;
     justify-content: center;
@@ -185,7 +129,6 @@
     margin-top: 1rem;
     flex-wrap: wrap;
   }
-
   .legend-item {
     display: flex;
     align-items: center;
@@ -193,10 +136,8 @@
     font-size: 0.8rem;
     color: #94a3b8;
   }
-
   .legend-dot {
-    width: 10px;
-    height: 10px;
+    width: 10px; height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -206,42 +147,25 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
-
-  @media (max-width: 640px) {
-    .insights-grid { grid-template-columns: 1fr; }
-  }
-
+  @media (max-width: 640px) { .insights-grid { grid-template-columns: 1fr; } }
   .insight-card {
     background: #1e2130;
-    border: 1px solid #2d3448;
     border-radius: 12px;
-    padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-    border-left: 4px solid;
-    position: relative;
+    border: 1px solid #2d3748;
+    border-left: 4px solid var(--border-color, #4f8ef7);
+    padding: 1.25rem 1.5rem;
   }
-
-  .insight-card.accent { border-left-color: #4f8ef7; }
-  .insight-card.success { border-left-color: #22c55e; }
-  .insight-card.warning { border-left-color: #f59e0b; }
-  .insight-card.danger { border-left-color: #ef4444; }
-
   .insight-title {
     font-size: 0.9rem;
     font-weight: 700;
     color: #f1f5f9;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
-
-  .insight-icon {
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-
   .insight-body {
     font-size: 0.82rem;
     color: #94a3b8;
@@ -249,160 +173,127 @@
   }
 
   /* HYPOTHESIS TABLE */
-  .section-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 1rem;
+  .table-card {
+    background: #1e2130;
+    border-radius: 12px;
+    border: 1px solid #2d3748;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
   }
-
-  .table-wrap {
-    overflow-x: auto;
-    max-height: 420px;
+  .table-wrapper {
+    max-height: 400px;
     overflow-y: auto;
     border-radius: 8px;
-    border: 1px solid #2d3448;
+    scrollbar-width: thin;
+    scrollbar-color: #2d3748 #1e2130;
   }
-
-  .table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
-  .table-wrap::-webkit-scrollbar-track { background: #1e2130; }
-  .table-wrap::-webkit-scrollbar-thumb { background: #2d3448; border-radius: 3px; }
-
+  .table-wrapper::-webkit-scrollbar { width: 6px; }
+  .table-wrapper::-webkit-scrollbar-track { background: #1e2130; }
+  .table-wrapper::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.82rem;
   }
-
   thead th {
-    background: #161b2e;
+    background: #161925;
     color: #64748b;
+    font-size: 0.72rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     padding: 0.75rem 1rem;
     text-align: left;
     position: sticky;
     top: 0;
     z-index: 1;
   }
-
-  tbody tr {
-    border-bottom: 1px solid #2d3448;
-    transition: background 0.15s;
-  }
-
-  tbody tr:nth-child(even) { background: #1a1f33; }
-  tbody tr:hover { background: #252b42; }
-
-  td {
-    padding: 0.7rem 1rem;
+  tbody tr:nth-child(even) { background: #191d2b; }
+  tbody tr:hover { background: #222840; }
+  tbody td {
+    padding: 0.75rem 1rem;
     color: #cbd5e1;
     vertical-align: top;
+    border-bottom: 1px solid #232738;
+    line-height: 1.4;
   }
-
-  td.id-cell {
-    font-weight: 700;
-    color: #4f8ef7;
-    white-space: nowrap;
-  }
-
-  td.hyp-cell { max-width: 280px; }
-  td.insight-cell { max-width: 280px; }
-
+  td:first-child { color: #4f8ef7; font-weight: 600; white-space: nowrap; }
   .verdict-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem 0.65rem;
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
     border-radius: 999px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
     white-space: nowrap;
   }
-
   .verdict-true { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
   .verdict-false { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
-  .verdict-inconclusive { background: rgba(100,116,139,0.15); color: #64748b; border: 1px solid rgba(100,116,139,0.3); }
+  .verdict-inconclusive { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
 
   /* CATEGORY CHART */
-  .cat-section {
-    margin-bottom: 1.5rem;
-  }
+  .cat-section { margin-bottom: 2rem; }
 
   /* FOOTER */
   .footer {
     text-align: center;
     padding: 1.5rem 0 0.5rem;
-    border-top: 1px solid #2d3448;
+    border-top: 1px solid #2d3748;
     color: #475569;
-    font-size: 0.75rem;
-    line-height: 1.6;
+    font-size: 0.78rem;
+    line-height: 1.8;
   }
+  .footer span { color: #64748b; }
 
-  .footer strong {
-    color: #64748b;
-  }
-
-  /* DIVIDER */
-  .section-wrap {
-    margin-bottom: 1.5rem;
-  }
-
-  /* Scrollbar global */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: #0f1117; }
-  ::-webkit-scrollbar-thumb { background: #2d3448; border-radius: 4px; }
+  /* Section spacer */
+  .section-mb { margin-bottom: 2rem; }
 </style>
 </head>
 <body>
 <div class="container">
 
   <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      <h1 id="dash-title"></h1>
-      <span class="model-badge" id="model-badge"></span>
-    </div>
-    <p class="header-subtitle" id="header-subtitle"></p>
-  </div>
+  <header class="header">
+    <h1 id="dash-title"></h1>
+    <p class="subtitle" id="dash-subtitle"></p>
+    <span class="badge" id="dash-badge"></span>
+  </header>
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
-    <div class="kpi-card blue">
+    <div class="kpi-card" style="--accent:#4f8ef7">
       <div class="kpi-label">Total Records</div>
-      <div class="kpi-value blue" id="kpi-total"></div>
-      <div class="kpi-sub">Events analyzed</div>
+      <div class="kpi-value" id="kpi-total"></div>
+      <div class="kpi-sub">Dataset size</div>
     </div>
-    <div class="kpi-card green">
+    <div class="kpi-card" style="--accent:#22c55e">
       <div class="kpi-label">Model Accuracy</div>
-      <div class="kpi-value green" id="kpi-accuracy"></div>
+      <div class="kpi-value" id="kpi-accuracy"></div>
       <div class="kpi-sub" id="kpi-model-name"></div>
     </div>
-    <div class="kpi-card amber">
+    <div class="kpi-card" style="--accent:#f59e0b">
       <div class="kpi-label">Avg Confidence</div>
-      <div class="kpi-value amber" id="kpi-conf"></div>
+      <div class="kpi-value" id="kpi-conf"></div>
       <div class="kpi-sub">Mean prediction confidence</div>
     </div>
-    <div class="kpi-card purple">
+    <div class="kpi-card" style="--accent:#818cf8">
       <div class="kpi-label">True Hypotheses</div>
-      <div class="kpi-value purple" id="kpi-hyp"></div>
-      <div class="kpi-sub">Validated hypotheses</div>
+      <div class="kpi-value" id="kpi-hyp"></div>
+      <div class="kpi-sub">Validated assumptions</div>
     </div>
   </div>
 
   <!-- CHARTS ROW -->
-  <div class="charts-grid">
-    <div class="chart-card">
-      <div class="chart-title">Prediction Distribution</div>
+  <div class="charts-row section-mb">
+    <div class="card">
+      <div class="card-title">Prediction Distribution</div>
       <div class="chart-container">
         <canvas id="doughnutChart"></canvas>
       </div>
       <div class="doughnut-legend" id="doughnut-legend"></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title">Feature Importance</div>
+    <div class="card">
+      <div class="card-title">Feature Importance</div>
       <div class="chart-container">
         <canvas id="barChart"></canvas>
       </div>
@@ -410,35 +301,31 @@
   </div>
 
   <!-- BUSINESS INSIGHTS -->
-  <div class="section-wrap">
-    <div class="section-title">Business Insights</div>
-    <div class="insights-grid" id="insights-grid"></div>
-  </div>
+  <div class="card-title" style="margin-bottom:1rem; font-size:0.875rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em;">Business Insights</div>
+  <div class="insights-grid section-mb" id="insights-grid"></div>
 
   <!-- HYPOTHESIS TABLE -->
-  <div class="section-wrap">
-    <div class="section-title">Hypothesis Validation</div>
-    <div class="card" style="padding:0; overflow:hidden;">
-      <div class="table-wrap">
-        <table id="hyp-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Verdict</th>
-              <th>Hypothesis</th>
-              <th>Business Insight</th>
-            </tr>
-          </thead>
-          <tbody id="hyp-tbody"></tbody>
-        </table>
-      </div>
+  <div class="table-card">
+    <div class="card-title">Hypothesis Validation</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Verdict</th>
+            <th>Hypothesis</th>
+            <th>Business Insight</th>
+          </tr>
+        </thead>
+        <tbody id="hyp-tbody"></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- CATEGORY BREAKDOWN (conditional) -->
+  <!-- CATEGORY BREAKDOWN -->
   <div class="cat-section" id="cat-section" style="display:none;">
-    <div class="chart-card">
-      <div class="chart-title" id="cat-title"></div>
+    <div class="card">
+      <div class="card-title" id="cat-title"></div>
       <div class="chart-container">
         <canvas id="catChart"></canvas>
       </div>
@@ -446,164 +333,152 @@
   </div>
 
   <!-- FOOTER -->
-  <div class="footer">
-    <strong>Generated by Auto Data Scientist v7 · CrewAI + Claude 4.6 Sonnet</strong><br>
-    <span id="footer-ts"></span>
-  </div>
+  <footer class="footer">
+    <div>Generated by <span>Auto Data Scientist v7 · CrewAI + Claude 4.6 Sonnet</span></div>
+    <div id="gen-timestamp"></div>
+  </footer>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const DATA = {
   "title": "Event Type \u2014 Business Dashboard",
   "context": "# business_context.txt\necho \"E-commerce platform with 285M user events. Goal: predict whether a user \nwill purchase a product based on their browsing behavior (view, cart, purchase). \nKey business questions: which products to recommend, which users are likely to \nconvert, and which product categories drive the most revenue.\"",
   "model_name": "XGBoost",
   "metric_label": "Accuracy",
-  "metric_value": 97.25,
+  "metric_value": 97.24,
   "total_rows": 5000000,
   "avg_conf": 97.2,
   "pred_dist": {
-    "view": 4999615,
-    "cart": 385
+    "view": 4999736,
+    "cart": 264
   },
   "feat_imp": {
-    "feat_interact": 0.34700000286102295,
-    "price": 0.26669999957084656,
-    "price_quantile": 0.15770000219345093,
-    "feat_product": 0.14169999957084656,
-    "user_price_ratio": 0.0869000032544136
+    "feat_interact": 0.38089999556541443,
+    "price": 0.26330000162124634,
+    "feat_product": 0.15369999408721924,
+    "price_tier": 0.125900000333786,
+    "user_segment": 0.07620000094175339,
+    "log_price": 0.0
   },
   "hypotheses": [
     {
       "id": "H1",
-      "verdict": "TRUE",
-      "statement": "Users with a higher 'price_zscore' (premium-priced products) tend to have a lower likelihood of 'pur",
-      "insight": "Extremely high-priced products are almost exclusively browsed and rarely purchased, suggesting the business should consi"
+      "verdict": "FALSE",
+      "statement": "Users with higher 'price_tier' tend to have a higher rate of 'purchase' event_type, as premium-price",
+      "insight": "Premium pricing (tier 4) does not drive the highest purchase intent, suggesting mid-tier pricing (tier 3) may represent "
     },
     {
       "id": "H2",
       "verdict": "FALSE",
-      "statement": "Products with a higher 'feat_ratio' (engineered feature capturing relative product characteristics) ",
-      "insight": "Products with lower feat_ratio values are actually more likely to convert to purchases, suggesting the business should p"
+      "statement": "Users in a higher 'user_segment' tend to have a higher proportion of 'purchase' event_type, indicati",
+      "insight": "User segment numbers are likely categorical identifiers rather than ordinal value rankings, so the business should analy"
     },
     {
       "id": "H3",
       "verdict": "FALSE",
-      "statement": "Users with a lower 'user_price_ratio' (user's interaction price relative to a baseline) tend to have",
-      "insight": "Higher-spending, premium-oriented users are actually the most valuable converters, suggesting the business should priori"
+      "statement": "Products with a higher 'price_zscore' tend to have a lower 'purchase' event_type rate, as unusually ",
+      "insight": "Since unusually priced products do not systematically deter purchases, the business should not rely solely on relative p"
     },
     {
       "id": "H4",
       "verdict": "FALSE",
-      "statement": "Products associated with specific 'brand' values tend to have significantly different 'purchase' eve",
-      "insight": "Since purchase conversion rates are remarkably consistent across brands regardless of their market prominence, the busin"
+      "statement": "Sessions (user_session) with a higher 'feat_sum' tend to have a higher 'purchase' event_type rate, s",
+      "insight": "Users who interact with too many product features may be experiencing decision fatigue or confusion, suggesting the busi"
     },
     {
       "id": "H5",
-      "verdict": "FALSE",
-      "statement": "Products in certain 'category_code' segments (e.g., electronics vs. apparel) tend to have higher 'pu",
-      "insight": "Stationery and electronics drive the highest purchase conversion rates, suggesting marketing and inventory investment sh"
+      "verdict": "TRUE",
+      "statement": "Products associated with a specific 'brand' tend to have significantly different 'purchase' event_ty",
+      "insight": "Marketing and inventory investment should be prioritized toward high-converting brands like 'vard' and 'camshel', while "
     },
     {
       "id": "H6",
-      "verdict": "FALSE",
-      "statement": "Products with a higher 'category_deviation' (price deviation from category average) tend to have low",
-      "insight": "Products priced near the category average convert best, but premium-priced items still outperform below-average priced o"
+      "verdict": "TRUE",
+      "statement": "Products belonging to specific 'category_code' values tend to have a higher 'purchase' event_type ra",
+      "insight": "The business should prioritize marketing spend and streamlined checkout experiences for high-converting categories like "
     },
     {
       "id": "H7",
       "verdict": "FALSE",
-      "statement": "Users with higher 'feat_interact' values (interaction feature combining product and category signals",
-      "insight": "The feat_interact feature appears to capture disengagement or browse-without-buy behavior rather than conversion intent,"
+      "statement": "Events with a higher 'feat_interact' value tend to have a higher 'purchase' event_type rate, as stro",
+      "insight": "Users with lower feature interaction values are actually more likely to purchase, suggesting that high feature interacti"
     },
     {
       "id": "H8",
       "verdict": "FALSE",
-      "statement": "Events occurring in certain 'price_bucket_x_log_product' segments tend to have significantly higher ",
-      "insight": "The interaction feature between price bucket and log product popularity does not meaningfully differentiate purchase pro"
+      "statement": "Events with a higher 'log_price' tend to show a lower 'cart' to 'purchase' conversion rate, as highe",
+      "insight": "Cart abandonment is not simply driven by price level, suggesting that low-priced items may also suffer from impulse-add "
     },
     {
       "id": "H9",
-      "verdict": "FALSE",
-      "statement": "Products with lower 'price_quantile' values (i.e., positioned in the cheapest tier of the price dist",
-      "insight": "Since mid-priced products drive the highest conversion rates, the business should focus marketing and inventory investme"
+      "verdict": "TRUE",
+      "statement": "Events with a higher 'feat_ratio' tend to have a higher 'purchase' event_type rate, as a favorable f",
+      "insight": "Products or sessions with a lower feat_ratio convert better, suggesting the business should focus on streamlining featur"
     },
     {
       "id": "H10",
       "verdict": "FALSE",
-      "statement": "User sessions ('user_session') with higher 'feat_sum' values (aggregate session-level feature) tend ",
-      "insight": "Sessions with moderate product interaction signals convert better than those with the highest browsing depth, suggesting"
+      "statement": "Events occurring at specific hours derived from 'event_time' tend to have a higher 'purchase' event_",
+      "insight": "Marketing campaigns and personalized push notifications should be prioritized during early morning hours (5-10 AM) when "
     }
   ],
   "insights": [
     {
-      "title": "Model Accuracy Masks Critical Imbalance",
-      "body": "The XGBoost model reports 97% accuracy, but this figure is misleading. Out of 5 million events, only 385 were cart additions, meaning the model is essentially predicting \"view\" almost every time and still looking accurate. True conversion intelligence requires retraining with balanced data before any business decisions should rely on these predictions."
+      "title": "Model Accuracy Masks Conversion Reality",
+      "body": "The XGBoost model achieves 97.2% accuracy, but this figure is heavily inflated by class imbalance. Out of 5 million records, only 264 were cart events versus 4.99 million views, meaning the model is largely predicting inaction. Executives should focus on conversion rate optimization rather than treating accuracy as a health metric."
     },
     {
-      "title": "Price Is the #1 Purchase Driver",
-      "body": "Price and price-related features dominate the model's decision-making, appearing in four of the top five predictors. Users encountering premium-priced products show significantly lower conversion likelihood, confirming that price sensitivity is the central barrier to purchase. Targeted discounting or installment options for high-value products could directly unlock suppressed conversion."
+      "title": "Price and Interaction Drive Purchase Intent",
+      "body": "The top predictors of purchase behavior are interaction features, price, product attributes, and user segment, giving the business clear levers to pull. Users who engage more deeply with a product and fall into favorable price tiers are significantly more likely to convert. Personalized pricing strategies and interaction-triggered nudges should be prioritized in the recommendation engine."
     },
     {
-      "title": "Browsing Does Not Equal Buying Intent",
-      "body": "With 4.99 million views versus 385 cart events, the platform is generating enormous traffic that almost never converts. This signals a fundamental gap between product discovery and purchase intent, likely driven by pricing friction or weak calls to action. Closing this gap by even a fraction of a percent would represent millions in incremental revenue."
+      "title": "Brand and Category Are Revenue Gatekeepers",
+      "body": "Validated analysis confirms that specific brands and product categories carry disproportionately higher purchase rates than others. This means marketing spend and inventory decisions should be concentrated around these high-converting segments rather than spread evenly across the catalog. Identifying and doubling down on these categories could yield outsized revenue gains with minimal additional cost."
     },
     {
-      "title": "Personalization Must Lead With Price Signals",
-      "body": "The user-price ratio feature ranking in the top five reveals that individual affordability context matters more than product popularity alone. Recommendation engines should prioritize surfacing products within a user's demonstrated price comfort zone rather than simply promoting high-margin or high-traffic items. This shift in recommendation logic is the fastest path to measurable conversion improvement."
+      "title": "Engagement Ratio Signals Buying Readiness",
+      "body": "Users with a higher feature interaction ratio are measurably more likely to complete a purchase, suggesting that browsing depth is a strong proxy for purchase intent. This gives the platform an early warning signal to identify warm prospects before they exit. Triggering real-time interventions such as discount offers or stock alerts at peak engagement moments could meaningfully lift conversion rates."
     }
   ],
   "cat_breakdown": {},
-  "true_hyp_count": 1,
-  "false_hyp_count": 9,
+  "true_hyp_count": 3,
+  "false_hyp_count": 7,
   "inc_hyp_count": 0
 };
 
-// ── Utility ──────────────────────────────────────────────────────────────────
-function fmt(n) {
-  return Number(n).toLocaleString();
-}
-
+// ── Utilities ──────────────────────────────────────────────────────────────
+function fmt(n) { return Number(n).toLocaleString(); }
 function truncate(str, len) {
-  const s = str.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-  return s.length > len ? s.slice(0, len) + '…' : s;
+  const clean = str.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  return clean.length > len ? clean.slice(0, len) + '…' : clean;
 }
 
-// ── Header ───────────────────────────────────────────────────────────────────
+// ── Header ─────────────────────────────────────────────────────────────────
 document.getElementById('dash-title').textContent = DATA.title;
-document.getElementById('header-subtitle').textContent = truncate(DATA.context, 120);
-document.getElementById('model-badge').textContent =
+document.getElementById('dash-subtitle').textContent = truncate(DATA.context, 120);
+document.getElementById('dash-badge').textContent =
   DATA.model_name + ' · ' + DATA.metric_label + ' ' + DATA.metric_value + '%';
 
-// ── KPI Cards ─────────────────────────────────────────────────────────────────
+// ── KPIs ───────────────────────────────────────────────────────────────────
 document.getElementById('kpi-total').textContent = fmt(DATA.total_rows);
 document.getElementById('kpi-accuracy').textContent = DATA.metric_value + '%';
 document.getElementById('kpi-model-name').textContent = DATA.model_name + ' model';
 document.getElementById('kpi-conf').textContent =
-  (DATA.avg_conf !== null && DATA.avg_conf !== undefined) ? DATA.avg_conf + '%' : 'N/A';
-const totalHyp = DATA.hypotheses.length;
+  DATA.avg_conf != null ? DATA.avg_conf + '%' : 'N/A';
+const totalHyp = DATA.true_hyp_count + DATA.false_hyp_count + DATA.inc_hyp_count;
 document.getElementById('kpi-hyp').textContent = DATA.true_hyp_count + '/' + totalHyp;
 
-// ── Chart defaults ────────────────────────────────────────────────────────────
+// ── Chart defaults ─────────────────────────────────────────────────────────
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.font.family = 'Inter, sans-serif';
 
-// ── Doughnut Chart ────────────────────────────────────────────────────────────
+// ── Doughnut Chart ─────────────────────────────────────────────────────────
 (function() {
   const labels = Object.keys(DATA.pred_dist);
   const values = Object.values(DATA.pred_dist);
-  const palette = ['#22c55e', '#ef4444', '#4f8ef7', '#f59e0b', '#818cf8', '#06b6d4'];
-
-  const legendEl = document.getElementById('doughnut-legend');
-  labels.forEach(function(lbl, i) {
-    const color = palette[i % palette.length];
-    const item = document.createElement('div');
-    item.className = 'legend-item';
-    item.innerHTML =
-      '<div class="legend-dot" style="background:' + color + '"></div>' +
-      '<span>' + lbl + ' (' + fmt(values[i]) + ')</span>';
-    legendEl.appendChild(item);
-  });
+  const colors = ['#22c55e', '#ef4444', '#4f8ef7', '#f59e0b', '#818cf8', '#06b6d4'];
 
   const ctx = document.getElementById('doughnutChart').getContext('2d');
   new Chart(ctx, {
@@ -612,48 +487,55 @@ Chart.defaults.font.family = 'Inter, sans-serif';
       labels: labels,
       datasets: [{
         data: values,
-        backgroundColor: labels.map(function(_, i) { return palette[i % palette.length]; }),
+        backgroundColor: labels.map((_, i) => colors[i % colors.length]),
         borderColor: '#1e2130',
         borderWidth: 3,
-        hoverOffset: 6
+        hoverBorderWidth: 4
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '68%',
+      cutout: '65%',
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
             label: function(ctx) {
-              const total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
               const pct = ((ctx.parsed / total) * 100).toFixed(2);
-              return ' ' + ctx.label + ': ' + fmt(ctx.parsed) + ' (' + pct + '%)';
+              return ' ' + fmt(ctx.parsed) + ' (' + pct + '%)';
             }
-          },
-          backgroundColor: '#161b2e',
-          borderColor: '#2d3448',
-          borderWidth: 1,
-          titleColor: '#f1f5f9',
-          bodyColor: '#94a3b8',
-          padding: 10
+          }
         }
       }
     }
   });
+
+  // Custom legend
+  const legend = document.getElementById('doughnut-legend');
+  labels.forEach((lbl, i) => {
+    const total = values.reduce((a, b) => a + b, 0);
+    const pct = ((values[i] / total) * 100).toFixed(1);
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-dot" style="background:${colors[i % colors.length]}"></div>
+      <span>${lbl} (${pct}%)</span>`;
+    legend.appendChild(item);
+  });
 })();
 
-// ── Horizontal Bar Chart ──────────────────────────────────────────────────────
+// ── Horizontal Bar Chart (Feature Importance) ──────────────────────────────
 (function() {
-  const entries = Object.entries(DATA.feat_imp).sort(function(a, b) { return a[1] - b[1]; });
-  const labels = entries.map(function(e) { return e[0]; });
-  const values = entries.map(function(e) { return e[1]; });
+  const entries = Object.entries(DATA.feat_imp)
+    .sort((a, b) => b[1] - a[1]);
+  const labels = entries.map(e => e[0]);
+  const values = entries.map(e => e[1]);
 
   const ctx = document.getElementById('barChart').getContext('2d');
 
-  // Gradient
-  const grad = ctx.createLinearGradient(0, 0, 400, 0);
+  // Gradient fill
+  const grad = ctx.createLinearGradient(300, 0, 0, 0);
   grad.addColorStop(0, '#4f8ef7');
   grad.addColorStop(1, '#818cf8');
 
@@ -665,35 +547,26 @@ Chart.defaults.font.family = 'Inter, sans-serif';
         label: 'Importance Score',
         data: values,
         backgroundColor: grad,
-        borderRadius: 5,
-        borderSkipped: false,
-        barThickness: 22
+        borderRadius: 6,
+        borderSkipped: false
       }]
     },
     options: {
-      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      indexAxis: 'y',
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: function(ctx) {
-              return ' ' + ctx.parsed.x.toFixed(4);
-            }
-          },
-          backgroundColor: '#161b2e',
-          borderColor: '#2d3448',
-          borderWidth: 1,
-          titleColor: '#f1f5f9',
-          bodyColor: '#94a3b8',
-          padding: 10
+            label: ctx => ' ' + ctx.parsed.x.toFixed(4)
+          }
         }
       },
       scales: {
         x: {
           title: { display: true, text: 'Importance Score', color: '#64748b', font: { size: 11 } },
-          grid: { color: '#2d3448' },
+          grid: { color: 'rgba(255,255,255,0.05)' },
           ticks: { color: '#64748b' }
         },
         y: {
@@ -705,52 +578,44 @@ Chart.defaults.font.family = 'Inter, sans-serif';
   });
 })();
 
-// ── Business Insights ─────────────────────────────────────────────────────────
+// ── Business Insights ──────────────────────────────────────────────────────
 (function() {
   const icons = ['📊', '🎯', '⚡', '💡'];
-  const classes = ['accent', 'success', 'warning', 'danger'];
+  const borders = ['#4f8ef7', '#22c55e', '#f59e0b', '#ef4444'];
   const grid = document.getElementById('insights-grid');
-
-  DATA.insights.forEach(function(ins, i) {
+  DATA.insights.forEach((ins, i) => {
     const card = document.createElement('div');
-    card.className = 'insight-card ' + classes[i % classes.length];
-    card.innerHTML =
-      '<div class="insight-title">' +
-      '<span class="insight-icon">' + icons[i % icons.length] + '</span>' +
-      '<span>' + ins.title + '</span>' +
-      '</div>' +
-      '<div class="insight-body">' + ins.body + '</div>';
+    card.className = 'insight-card';
+    card.style.setProperty('--border-color', borders[i % borders.length]);
+    card.innerHTML = `
+      <div class="insight-title">${icons[i % icons.length]} ${ins.title}</div>
+      <div class="insight-body">${ins.body}</div>
+    `;
     grid.appendChild(card);
   });
 })();
 
-// ── Hypothesis Table ──────────────────────────────────────────────────────────
+// ── Hypothesis Table ───────────────────────────────────────────────────────
 (function() {
   const tbody = document.getElementById('hyp-tbody');
-
-  DATA.hypotheses.forEach(function(h) {
+  DATA.hypotheses.forEach(h => {
     const tr = document.createElement('tr');
-
     let badgeClass = 'verdict-inconclusive';
     if (h.verdict === 'TRUE') badgeClass = 'verdict-true';
     else if (h.verdict === 'FALSE') badgeClass = 'verdict-false';
-
-    tr.innerHTML =
-      '<td class="id-cell">' + h.id + '</td>' +
-      '<td><span class="verdict-badge ' + badgeClass + '">' + h.verdict + '</span></td>' +
-      '<td class="hyp-cell">' + h.statement + '</td>' +
-      '<td class="insight-cell">' + h.insight + '</td>';
-
+    tr.innerHTML = `
+      <td>${h.id}</td>
+      <td><span class="verdict-badge ${badgeClass}">${h.verdict}</span></td>
+      <td>${h.statement}</td>
+      <td>${h.insight}</td>
+    `;
     tbody.appendChild(tr);
   });
 })();
 
-// ── Category Breakdown ────────────────────────────────────────────────────────
+// ── Category Breakdown Chart ───────────────────────────────────────────────
 (function() {
-  if (!DATA.cat_breakdown || !DATA.cat_breakdown.column || !DATA.cat_breakdown.data) {
-    return;
-  }
-
+  if (!DATA.cat_breakdown || !DATA.cat_breakdown.column || !DATA.cat_breakdown.data) return;
   const section = document.getElementById('cat-section');
   section.style.display = 'block';
   document.getElementById('cat-title').textContent =
@@ -765,8 +630,42 @@ Chart.defaults.font.family = 'Inter, sans-serif';
     data: {
       labels: labels,
       datasets: [{
-        label: 'Late Rate (%)',
+        label: 'Rate (%)',
         data: values,
         backgroundColor: '#4f8ef7',
-        borderRadius: 5,
-        barTh
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.parsed.y.toFixed(1) + '%' }
+        }
+      },
+      scales: {
+        y: {
+          min: 0, max: 100,
+          ticks: {
+            callback: v => v + '%',
+            color: '#64748b'
+          },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#94a3b8' }
+        }
+      }
+    }
+  });
+})();
+
+// ── Footer ─────────────────────────────────────────────────────────────────
+document.getElementById('gen-timestamp').textContent =
+  'Generated on ' + new Date().toLocaleString();
+</script>
+</body>
+</html>

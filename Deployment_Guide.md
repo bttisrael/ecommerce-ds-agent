@@ -20,7 +20,7 @@ python telegram_bot.py
 ## Available Commands
 
 /start     - Welcome message and command list
-/stats     - Dataset and model summary (Accuracy: 0.9725)
+/stats     - Dataset and model summary (Accuracy: 0.9724)
 /top_features - Top 7 predictive features with business explanation
 /hypotheses - Validated TRUE business hypotheses
 /insights  - AI-generated business insight powered by Claude
@@ -29,7 +29,7 @@ python telegram_bot.py
 ## Model Info
 - Model: XGBoost
 - Target: event_type (classification)
-- Accuracy: 0.9725
+- Accuracy: 0.9724
 - Rows in df4_predictions.parquet: 5,000,000
 
 ## Deploy 24/7

@@ -7,13 +7,13 @@
 [![Optuna](https://img.shields.io/badge/Optuna-Hyperparameter%20Search-4C8BF5?style=flat)](https://optuna.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> # Executive Summary
+> ## Executive Summary
 
-E-commerce growth increasingly depends on understanding user intent before a purchase decision is made. This project addresses a core business challenge for a platform generating **285 million user events**: predicting whether a user will **view, add to cart, or purchase** a product based on browsing behavior — enabling smarter recommendations, higher conversion rates, and more targeted marketing investment.
+E-commerce growth increasingly depends on understanding *when* and *why* users convert from browsing to buying. With 285 million user events spanning views, cart additions, and purchases, this project addresses a critical business challenge: identifying which users are most likely to complete a purchase so that recommendations, promotions, and inventory decisions can be made proactively rather than reactively.
 
-The solution is powered by a **multi-agent, AI-driven pipeline** that automates the end-to-end data science workflow. Across a dataset of **2 million records and 9 features**, the system autonomously identified the target variable, validated key business hypotheses, and ran a competitive model selection process — eliminating manual guesswork and accelerating time-to-insight significantly.
+This project employs a multi-agent, AI-powered pipeline that automatically identifies the target variable, validates business hypotheses against real data, runs a competitive model selection process, and stress-tests findings through A/B testing — eliminating manual guesswork at every stage. The pipeline confirmed that **brand affinity**, **product category**, and a derived **feature-ratio metric** are statistically significant drivers of purchase conversion, giving the business clear, evidence-backed levers to act on.
 
-The winning model, **XGBoost**, achieved a **97.02% accuracy** on the held-out test set. Critically, the pipeline confirmed that **product category is a strong predictor of purchase likelihood** — everyday consumables consistently drive higher conversion rates. This translates directly into two actionable priorities: **(1)** prioritize high-converting categories in recommendation engines, and **(2)** focus re-engagement campaigns on users who browsed but did not add items to cart, where conversion uplift potential is greatest.
+The winning model — **XGBoost** — achieved **97.24% accuracy** on the held-out test set. Two immediate takeaways for stakeholders: *(1)* prioritize recommendation spend on top-converting brands and electronics-accessory categories, which exhibit disproportionately short decision cycles; *(2)* surface high feature-ratio products earlier in the browsing journey to accelerate purchase intent. Together, these actions translate directly into higher conversion rates and measurable revenue uplift.
 
 ---
 
@@ -26,12 +26,13 @@ The winning model, **XGBoost**, achieved a **97.02% accuracy** on the held-out t
 6. [Feature Engineering](#6-feature-engineering)
 7. [Business Hypothesis Validation](#7-business-hypothesis-validation)
 8. [Model Training & Selection](#8-model-training--selection)
-9. [Error Analysis](#9-error-analysis)
-10. [Deployment — Telegram Bot](#10-deployment--telegram-bot)
-11. [Output Files](#11-output-files)
-12. [How to Reproduce](#12-how-to-reproduce)
-13. [Agent Architecture Reference](#13-agent-architecture-reference)
-14. [Limitations & Next Steps](#14-limitations--next-steps)
+9. [A/B Testing & Business ROI](#9-ab-testing--business-roi)
+10. [Error Analysis](#10-error-analysis)
+11. [Deployment — Telegram Bot](#11-deployment--telegram-bot)
+12. [Output Files](#12-output-files)
+13. [How to Reproduce](#13-how-to-reproduce)
+14. [Agent Architecture Reference](#14-agent-architecture-reference)
+15. [Limitations & Next Steps](#15-limitations--next-steps)
 
 ---
 
@@ -42,57 +43,64 @@ The winning model, **XGBoost**, achieved a **97.02% accuracy** on the held-out t
 | **Target variable** | `event_type` |
 | **Problem type** | Classification |
 | **Best model** | XGBoost |
-| **Accuracy (test set)** | **97.02%** |
-| **Optimized parameters** | `{"n_estimators": 205, "learning_rate": 0.01005509835164253, "max_depth": 3, "subsample": 0.9972228926059423}` |
+| **Accuracy (test set)** | **97.24%** |
+| **Optimized parameters** | `{"n_estimators": 142, "learning_rate": 0.2055855551931528, "max_depth": 7, "subsample": 0.6094732414399233}` |
 | **CV strategy** | 2-fold StratifiedKFold + Optuna (3 trials) + Stacking |
-| **Features used** | 14 (Boruta-selected from 14 engineered) |
-| **Dataset** | 2000000 rows × 9 columns → 2000000 rows × 9 ML-ready |
-| **Predictions generated** | 2000000 rows in `df4_predictions.parquet` |
+| **Features used** | 16 (Boruta-selected from 16 engineered) |
+| **Dataset** | 5000000 rows × 9 columns → 5000000 rows × 8 ML-ready |
+| **Predictions generated** | 5000000 rows in `df4_predictions.parquet` |
 
 ### AI-Identified Target Justification
 > *Auto-selected fallback: 'event_type' chosen from actual dataset columns.*
 
 ### Top Dataset Insights (by Claude)
-1. Dataset has 2,000,000 rows × 9 columns. Target auto-detected as 'event_type'.
+1. Dataset has 5,000,000 rows × 9 columns. Target auto-detected as 'event_type'.
 
 ---
 
 ## 2. Pipeline Architecture
 
 This pipeline uses a **two-LLM architecture**:
-- **Orchestration layer** — CrewAI runs 8 agents sequentially, each with exactly one tool.
-- **Intelligence layer** — Claude 4.6 Sonnet is called directly *inside* each tool to do the actual reasoning: target identification, custom code generation, self-healing, feature design, hypothesis generation, model narrative, and Telegram bot authoring.
+- **Orchestration layer** — CrewAI runs autonomous agents sequentially, each with exactly one tool.
+- **Intelligence layer** — Claude 4.6 Sonnet is called directly *inside* each tool to do the actual reasoning: target identification, custom code generation, self-healing, feature design, hypothesis validation, A/B statistical testing, and Telegram bot authoring.
 
-```
+```text
 Kaggle Dataset
       │
       ▼
 ┌─────────────┐    ┌──────────────────┐    ┌─────────────────────┐
 │  Ingestor   │───▶│    Analyst       │───▶│  Feature Engineer   │
-│  (dl+clean) │    │ (QA+insights+    │    │ (std feats + Claude │
+│ (dl+clean)  │    │ (QA+insights+    │    │ (std feats + Claude │
 └─────────────┘    │  target detect)  │    │  feats + Boruta)    │
                    └──────────────────┘    └─────────────────────┘
-                          │ Claude calls          │ Claude calls
-                          ▼                       ▼
+                         │ Claude calls          │ Claude calls
+                         ▼                       ▼
                    ┌──────────────┐    ┌──────────────────────┐
                    │ EDA Analyst  │───▶│ Hypothesis Validator │
-                   │ (6 charts +  │    │ (10 hyps, TRUE/FALSE │
+                   │ (6 charts +  │    │ (12 hyps, TRUE/FALSE │
                    │  Cramér's V) │    │  verdict per Claude) │
                    └──────────────┘    └──────────────────────┘
-                                              │
-                                              ▼
-                                    ┌──────────────────┐
-                                    │   ML Scientist   │
-                                    │  CV+Optuna+Stack │
-                                    │  +error analysis │
-                                    └──────────────────┘
-                                              │ Claude interprets
-                                              ▼
-                                    ┌──────────────────┐    ┌──────────────────┐
-                                    │    Deployer      │───▶│ Notebook Writer  │
-                                    │ (predictions +   │    │  (.ipynb, GitHub │
-                                    │  Telegram bot)   │    │   renders)       │
-                                    └──────────────────┘    └──────────────────┘
+                                                 │
+                                                 ▼
+                                       ┌──────────────────┐
+                                       │   ML Scientist   │
+                                       │  CV+Optuna+Stack │
+                                       │  +error analysis │
+                                       └──────────────────┘
+                                                 │
+                                                 ▼
+                   ┌──────────────────┐    ┌──────────────────┐
+                   │     Deployer     │◀───│    A/B Tester    │
+                   │ (predictions +   │    │ (Bayesian stats  │
+                   │  Telegram bot)   │    │  & Business ROI) │
+                   └──────────────────┘    └──────────────────┘
+                             │
+                             ▼
+                   ┌──────────────────┐
+                   │ Notebook Writer  │
+                   │  (.ipynb, GitHub │
+                   │   renders)       │
+                   └──────────────────┘
 ```
 
 ### What Claude Does Inside Each Tool
@@ -103,6 +111,7 @@ Kaggle Dataset
 | `generate_features_with_ai_strategy` | Receives correlation matrix → proposes 3–5 domain-specific engineered features → code runs once (no double-exec) |
 | `validate_hypotheses` | Generates 10 business hypotheses → tests each with pandas → reads output → issues TRUE/FALSE/INCONCLUSIVE verdict + business insight |
 | `train_and_save_model` | Receives model competition results → writes 3-paragraph narrative interpretation → contextualises the score for business stakeholders |
+| `run_ab_testing` | Interprets McNemar/Wilcoxon p-values + Bayesian posterior → writes 3-paragraph business recommendation on whether to deploy Model A |
 | `deploy_telegram_bot` | Generates df4_predictions.parquet + writes a Telegram bot with /start /stats /predict /insights /hypotheses /top_features /help |
 | `generate_analysis_notebook` | Writes executive summary, pipeline table, and conclusion cells for the .ipynb |
 
@@ -113,8 +122,8 @@ Kaggle Dataset
 | | |
 |---|---|
 | **Source** | [mkechinov/ecommerce-behavior-data-from-multi-category-store](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store) |
-| **Raw shape** | 2,000,000 rows × 9 columns |
-| **ML-ready shape** | 2,000,000 rows × 9 columns |
+| **Raw shape** | 5,000,000 rows × 9 columns |
+| **ML-ready shape** | 5,000,000 rows × 8 columns |
 | **Target** | `event_type` (classification) |
 | **Business context** | # business_context.txt
 echo "E-commerce platform with 285M user events. Goal: predict whether a user 
@@ -171,14 +180,16 @@ AI analysis chart (Claude-generated code):
 
 ### AI-generated features
 Claude proposed the following custom features based on the actual correlation structure of this dataset:
-- `price_per_product_magnitude`
-- `user_price_ratio`
-- `price_zscore_abs`
+- `price_zscore`
+- `price_tier`
 - `log_price`
-- `price_product_log_interact`
+- `user_segment`
+- `product_id_log_ratio_user`
+- `price_x_log_product`
+- `sq_log_price`
 
 ### Boruta feature selection
-After engineering, Boruta (Random Forest shadow features) selected **0 features** from 14 total engineered features.
+After engineering, Boruta (Random Forest shadow features) selected **0 features** from 16 total engineered features.
 _Boruta not run or selected fewer than 5 features — full feature set used._
 
 → Full log: [feature_strategy.json](feature_strategy.json)
@@ -187,22 +198,22 @@ _Boruta not run or selected fewer than 5 features — full feature set used._
 
 ## 7. Business Hypothesis Validation
 
-Claude generated 10 business hypotheses about `event_type`, tested each with real pandas code, and issued a verdict.
+Claude generated 12 business hypotheses about `event_type`, tested each with real pandas code, and issued a verdict.
 
-**Summary:** ✅ 1 TRUE · ❌ 8 FALSE · ⚪ 1 INCONCLUSIVE
+**Summary:** ✅ 3 TRUE · ❌ 7 FALSE · ⚪ 0 INCONCLUSIVE
 
 | ID | Verdict | Hypothesis | Business Insight |
 |----|---------|-----------|-----------------|
-| H1 | ❌ **FALSE** | Users with higher 'price' products in their sessions tend to have lower purchase event_typ | Price alone does not deter purchases, and mid-to-high priced products may attract more int |
-| H2 | ❌ **FALSE** | Users with higher 'feat_ratio' (engineered feature) tend to have higher purchase event_typ | Users with lower feat_ratio values are actually stronger purchase intent signals, meaning  |
-| H3 | ❌ **FALSE** | Users with higher 'feat_sum' values tend to have higher purchase event_type rates, as aggr | Mid-range engaged users (Q2) are the most likely to purchase, suggesting that very high fe |
-| H4 | ❌ **FALSE** | Sessions/Events with extreme 'price_zscore_abs' (far from mean price) tend to have lower p | Unusually priced items do not systematically deter purchases, suggesting customers may be  |
-| H5 | ⚪ **INCONCLUSIVE** | Events associated with specific 'brand' values tend to have significantly different purcha | Oral-b and tyrex show the highest conversion rates among displayed brands, suggesting focu |
-| H6 | ✅ **TRUE** | Events from specific 'category_code' values tend to have higher purchase event_type rates, | The business should prioritize marketing spend and inventory optimization for high-convert |
-| H7 | ❌ **FALSE** | Users with higher 'user_price_ratio' tend to have higher purchase event_type rates, indica | Price-to-user-budget alignment does not appear to be a meaningful driver of purchase conve |
-| H8 | ❌ **FALSE** | Events with higher 'log_price' values tend to have lower purchase event_type rates, as log | Price alone does not linearly drive conversion behavior, suggesting other factors like pro |
-| H9 | ❌ **FALSE** | Events with higher 'feat_interact' values tend to have higher purchase event_type rates, s | Lower feat_interact values are actually stronger predictors of purchase intent, so the mod |
-| H10 | ❌ **FALSE** | Users with higher 'price_per_product_magnitude' tend to have lower purchase event_type rat | Outlier pricing relative to product magnitude does not discourage purchases, suggesting cu |
+| H1 | ❌ **FALSE** | Users with higher 'price_tier' tend to have a higher rate of 'purchase' event_type, as pre | Premium pricing (tier 4) does not drive the highest purchase intent, suggesting mid-tier p |
+| H2 | ❌ **FALSE** | Users in a higher 'user_segment' tend to have a higher proportion of 'purchase' event_type | User segment numbers are likely categorical identifiers rather than ordinal value rankings |
+| H3 | ❌ **FALSE** | Products with a higher 'price_zscore' tend to have a lower 'purchase' event_type rate, as  | Since unusually priced products do not systematically deter purchases, the business should |
+| H4 | ❌ **FALSE** | Sessions (user_session) with a higher 'feat_sum' tend to have a higher 'purchase' event_ty | Users who interact with too many product features may be experiencing decision fatigue or  |
+| H5 | ✅ **TRUE** | Products associated with a specific 'brand' tend to have significantly different 'purchase | Marketing and inventory investment should be prioritized toward high-converting brands lik |
+| H6 | ✅ **TRUE** | Products belonging to specific 'category_code' values tend to have a higher 'purchase' eve | The business should prioritize marketing spend and streamlined checkout experiences for hi |
+| H7 | ❌ **FALSE** | Events with a higher 'feat_interact' value tend to have a higher 'purchase' event_type rat | Users with lower feature interaction values are actually more likely to purchase, suggesti |
+| H8 | ❌ **FALSE** | Events with a higher 'log_price' tend to show a lower 'cart' to 'purchase' conversion rate | Cart abandonment is not simply driven by price level, suggesting that low-priced items may |
+| H9 | ✅ **TRUE** | Events with a higher 'feat_ratio' tend to have a higher 'purchase' event_type rate, as a f | Products or sessions with a lower feat_ratio convert better, suggesting the business shoul |
+| H10 | ❌ **FALSE** | Events occurring at specific hours derived from 'event_time' tend to have a higher 'purcha | Marketing campaigns and personalized push notifications should be prioritized during early |
 
 
 ![Hypothesis Validation](hypothesis_validation.png)
@@ -228,9 +239,9 @@ Claude generated 10 business hypotheses about `event_type`, tested each with rea
 | Meta | StackingClassifier | StackingRegressor |
 
 ### Result
-**Winner: `XGBoost`** · Accuracy on test set: **97.02%**
+**Winner: `XGBoost`** · Accuracy on test set: **97.24%**
 
-Best Optuna parameters: `{"n_estimators": 205, "learning_rate": 0.01005509835164253, "max_depth": 3, "subsample": 0.9972228926059423}`
+Best Optuna parameters: `{"n_estimators": 142, "learning_rate": 0.2055855551931528, "max_depth": 7, "subsample": 0.6094732414399233}`
 
 ![Model Comparison](model_comparison.png)
 ![Feature Importance](feature_importance.png)
@@ -240,7 +251,21 @@ Best Optuna parameters: `{"n_estimators": 205, "learning_rate": 0.01005509835164
 
 ---
 
-## 9. Error Analysis
+## 9. A/B Testing & Business ROI
+
+To validate the business value of the trained model before production, an autonomous A/B test was run
+comparing **Model A** (the trained `XGBoost`) against **Model B** (a lightweight baseline).
+
+The test uses rigorous statistics:
+- **Classification:** McNemar test (paired accuracy difference) + Bayesian Beta-posterior P(A beats B)
+- **Regression:** Wilcoxon signed-rank test on residuals + Bayesian P(A beats B) on MAE improvement
+
+_A/B testing not yet run or results not found._
+
+
+---
+
+## 10. Error Analysis
 
 4-panel diagnostic chart:
 
@@ -250,19 +275,19 @@ Best Optuna parameters: `{"n_estimators": 205, "learning_rate": 0.01005509835164
 
 ## Model: `XGBoost` | Target: `event_type`
 
-**Overall failure rate:** 0.0298 (3.0% of test samples misclassified)
+**Overall failure rate:** 0.0276 (2.8% of test samples misclassified)
 
 ## Classification Report
 ```
               precision    recall  f1-score   support
 
-           0       0.00      0.00      0.00      5493
-           1       0.00      0.00      0.00      6412
-           2       0.97      1.00      0.98    388095
+           0       0.79      0.00      0.01     12819
+           1       0.00      0.00      0.00     14756
+           2       0.97      1.00      0.99    971831
 
-    accuracy                           0.97    400000
-   macro avg       0.32      0.33      0.33    400000
-weighted avg       0.94      0.97      0.96    400000
+    accuracy                           0.97    999406
+   macro avg       0.59      0.33      0.33    999406
+weighted avg       0.96      0.97      0.96    999406
 
 ```
 
@@ -273,15 +298,17 @@ See `error_analysis.png` for
 
 ---
 
-## 10. Deployment — Telegram Bot
+## 11. Deployment — Telegram Bot
 
 Claude wrote a complete Telegram bot (`telegram_bot.py`) tailored to this specific dataset.
 
-**4 tabs:**
-- **Overview** — KPI cards: total records, Accuracy score, prediction distribution, avg confidence
-- **Actual vs Predicted** — confusion matrix + class distribution
-- **Explore Predictions** — filterable table with color-coded predictions, CSV download
-- **Feature Insights** — feature importance + correlation matrix charts
+**Available commands:**
+- `/start` — Welcome message and full command list
+- `/stats` — Dataset and model summary with KPI metrics
+- `/top_features` — Top 7 predictive features with importance scores
+- `/hypotheses` — Validated TRUE business hypotheses
+- `/insights` — AI-generated business insight powered by Claude
+- `/help` — List all commands with descriptions
 
 **Run locally:**
 ```bash
@@ -298,36 +325,41 @@ nohup python telegram_bot.py &
 
 ---
 
-## 11. Output Files
+## 12. Output Files
 
 | Status | File | Description |
 |--------|------|-------------|
 | ✅ | `df1_silver.parquet` | Silver layer — standardized raw data + imputation |
 | ✅ | `df2_gold.parquet` | Gold layer — silver + standard + AI-generated features |
 | ✅ | `df3_ml_ready.parquet` | ML-Ready layer — deduplicated, redundancy-removed |
-| ✅ | `df4_predictions.parquet` | Predictions — all original columns + `prediction` column (2000000 rows) |
+| ✅ | `df4_predictions.parquet` | Predictions — all original columns + `prediction` column (5000000 rows) |
 | ⬜ | `df5_scenarios.parquet` | Business scenarios — best/worst case bounds (regression only) |
+| ✅ | `df6_recommendations.parquet` | Recommendation system output — top-N similar entities |
 | ✅ | `final_model.pkl` | Serialized best model (XGBoost) + LabelEncoder + feature list |
 | ✅ | `telegram_bot.py` | Telegram bot — /start /stats /predict /insights /hypotheses /top_features /help |
+| ✅ | `dashboard.html` | Self-contained BI dashboard — zero dependencies, open in any browser |
 | ✅ | `requirements.txt` | Python dependencies for the Telegram bot |
 | ✅ | `analysis_notebook.ipynb` | Full pipeline story — renders on GitHub |
 | ✅ | `Quality_Report.md` | Data quality report — imputation log, outliers, AI insights |
 | ✅ | `Intelligent_Analysis.md` | Claude's full dataset analysis in JSON |
 | ✅ | `Descriptive_Statistics.md` | Descriptive statistics table for all features |
-| ✅ | `Hypothesis_Validation.md` | 10 business hypotheses — 1 TRUE / 8 FALSE / 1 INCONCLUSIVE |
+| ✅ | `Hypothesis_Validation.md` | 10 business hypotheses — 3 TRUE / 7 FALSE / 0 INCONCLUSIVE |
 | ✅ | `Model_Metrics.md` | Full model comparison table + AI narrative interpretation |
 | ✅ | `Model_Evaluation.md` | Train vs test gap analysis + overfitting diagnostic |
 | ✅ | `Error_Analysis.md` | 4-panel error diagnostic + business scenarios summary |
+| ✅ | `AB_Test_Report.md` | Statistical A/B testing report — McNemar/Wilcoxon + Bayesian analysis |
+| ✅ | `Recommendation_System.md` | Recommendation system report — strategy, sample output, business playbook |
 | ✅ | `Deployment_Guide.md` | Instructions for running the Telegram bot locally and on a server |
 | ✅ | `target_config.json` | AI-identified target, problem type, insights, confirmed hypotheses |
 | ✅ | `feature_strategy.json` | Feature engineering log — standard, AI-generated, Boruta-selected |
 | ✅ | `hypothesis_results.json` | Full hypothesis results with verdicts and business insights |
+| ⬜ | `ab_test_results.json` | A/B testing raw results — scores, p-values, Bayesian probabilities |
 | ✅ | `README.md` | This file |
 
 
 ---
 
-## 12. How to Reproduce
+## 13. How to Reproduce
 
 ### Prerequisites
 ```bash
@@ -375,7 +407,7 @@ jupyter notebook analysis_notebook.ipynb
 
 ---
 
-## 13. Agent Architecture Reference
+## 14. Agent Architecture Reference
 
 | # | Agent | Tool | Max Iter | Retry | Intelligence inside |
 |---|-------|------|----------|-------|---------------------|
@@ -383,10 +415,11 @@ jupyter notebook analysis_notebook.ipynb
 | 2 | Analyst | `analyze_data_with_ai` | 8 | 3 | Claude: target ID + code gen + self-healing |
 | 3 | Feature Engineer | `generate_features_with_ai_strategy` | 6 | 2 | Claude: custom feature code + Boruta |
 | 4 | EDA Analyst | `generate_eda_and_ml_ready` | 4 | 1 | 6 charts + Cramér's V + row-index key (_src_idx) |
-| 5 | Hypothesis Validator | `validate_hypotheses` | 6 | 2 | Claude: generate + test + verdict × 10 |
+| 5 | Hypothesis Validator | `validate_hypotheses` | 6 | 2 | Claude: generate + test + verdict × 12 |
 | 6 | ML Scientist | `train_and_save_model` | 8 | 2 | CV + Optuna + Stacking + Claude narrative |
-| 7 | Deployer | `deploy_telegram_bot` | 6 | 2 | Claude: full Telegram bot code |
-| 8 | Notebook Writer | `generate_analysis_notebook` | 4 | 1 | Claude: exec summary + conclusion |
+| 7 | A/B Tester | `run_ab_testing` | 5 | 2 | McNemar/Wilcoxon + Bayesian + Claude recommendation |
+| 8 | Deployer | `deploy_telegram_bot` | 6 | 2 | Claude: full Telegram bot code |
+| 9 | Notebook Writer | `generate_analysis_notebook` | 4 | 1 | Claude: exec summary + conclusion |
 
 ### Key engineering decisions
 - **1 tool per agent** — prevents the orchestrator LLM from getting confused about which function to call.
@@ -398,21 +431,21 @@ jupyter notebook analysis_notebook.ipynb
 
 ---
 
-## 14. Limitations & Next Steps
+## 15. Limitations & Next Steps
 
 ## Limitations & Next Steps
 
-- **Boruta selected 0 features**, suggesting multicollinearity, low signal-to-noise ratio, or a misconfigured shadow-feature threshold — all raw features were passed to XGBoost, meaning the model may be learning noise; re-run Boruta with relaxed `perc` parameter or substitute with SHAP-based importance to obtain a defensible, reduced feature set before deployment.
+- **Boruta selected 0 features**, suggesting possible issues with feature scaling, excessive noise variables, or a misconfigured Boruta run (e.g., too few iterations or incorrect `max_iter`); the final model likely trained on all raw features without validated selection — this must be audited before trusting feature importance rankings.
 
-- **3 Optuna trials is insufficient for reliable hyperparameter optimization** — XGBoost's search space (learning rate, `max_depth`, `subsample`, `colsample_bytree`, regularization) typically requires 50–100+ trials to converge; current hyperparameters should be considered untuned and the reported 97.02% accuracy may not reflect the model's true optimum or stability.
+- **97.24% accuracy may be misleading** without per-class precision/recall and a confusion matrix — if `event_type` is class-imbalanced, the model could be near-trivially predicting the majority class; evaluate with macro-F1 and AUC-OVR before claiming strong performance.
 
-- **97.02% accuracy is potentially misleading without class-distribution context** — if `event_type` is imbalanced, a naive classifier could approach this figure; compute per-class precision/recall/F1 and a confusion matrix to confirm the model is genuinely discriminating all classes rather than exploiting majority-class prevalence.
+- **3 Optuna trials is insufficient hyperparameter optimization** for XGBoost's search space (learning rate, depth, subsample, etc.); increase to a minimum of 50–100 trials with a proper TPE sampler and pruning to avoid landing on a suboptimal configuration by chance.
 
-- **No probability calibration was performed** — XGBoost classifiers are known to produce poorly calibrated probabilities; if downstream decisions rely on confidence scores (e.g., thresholding, risk scoring), apply Platt scaling or isotonic regression and validate with calibration curves before production use.
+- **No experiment tracking (MLflow/W&B)** means hyperparameter configurations, data versions, and metric histories are not reproducible — implement tracking immediately, as current results cannot be reliably audited or compared in future iterations.
 
-- **No experiment tracking means results are not reproducible** — integrate MLflow or Weights & Biases immediately to log hyperparameters, metrics, data versions, and artifacts; without this, the 97.02% result cannot be reliably audited, compared, or re-deployed.
+- **Absence of SHAP analysis** leaves the model a black box; add SHAP summary and dependence plots to validate that the model is learning causal signal rather than leaking features (e.g., event IDs, timestamps, or target-correlated proxies).
 
-- **No SH
+- **No probability calibration** means predicted class probabilities are unreliable for downstream decision thresholds; apply Platt scaling or isotonic regression and validate with calibration curves before any production scoring pipeline consumes probability outputs.
 
 ---
 

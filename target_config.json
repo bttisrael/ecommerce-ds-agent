@@ -7,9 +7,13 @@
     "Dataset has 5,000,000 rows \u00d7 9 columns. Target auto-detected as 'event_type'."
   ],
   "hypothesis_insights": [
-    "Extremely high-priced products are almost exclusively browsed and rarely purchased, suggesting the business should consider price anchoring strategies, installment payment options, or targeted promotions for ultra-premium items to improve conversion rates."
+    "Marketing and inventory investment should be prioritized toward high-converting brands like 'vard' and 'camshel', while underperforming brands should be evaluated for pricing, placement, or promotional strategy adjustments to close the conversion gap.",
+    "The business should prioritize marketing spend and streamlined checkout experiences for high-converting categories like audio headphones, diapers, and personal appliances to capitalize on their naturally shorter purchase decision cycles.",
+    "Products or sessions with a lower feat_ratio convert better, suggesting the business should focus on streamlining feature presentation rather than overwhelming users with too many features, as simpler or more focused product experiences drive higher purchase conversion."
   ],
   "true_hypotheses": [
-    "Users with a higher 'price_zscore' (premium-priced products) tend to have a lower likelihood of 'purchase' event_type, as higher prices create conversion friction and more browsing/cart abandonment behavior."
+    "Products associated with a specific 'brand' tend to have significantly different 'purchase' event_type rates, with top brands driving disproportionately higher conversion",
+    "Products belonging to specific 'category_code' values tend to have a higher 'purchase' event_type rate, as certain product categories (e.g., electronics accessories) have shorter decision cycles",
+    "Events with a higher 'feat_ratio' tend to have a higher 'purchase' event_type rate, as a favorable feature ratio captures a distinctive product-user fit that accelerates purchase decisions"
   ]
 }

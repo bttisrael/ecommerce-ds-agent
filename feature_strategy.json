@@ -12,13 +12,14 @@
   ],
   "ai_features": [
     "price_zscore",
-    "price_per_log_product",
-    "user_price_ratio",
-    "category_deviation",
-    "price_quantile",
-    "price_bucket_x_log_product"
+    "price_tier",
+    "log_price",
+    "user_segment",
+    "product_id_log_ratio_user",
+    "price_x_log_product",
+    "sq_log_price"
   ],
   "boruta_selected": [],
-  "ai_code": "\n# Feature 1: Price relative to its overall mean (normalized price deviation)\n# Captures whether a product is expensive or cheap relative to average\nprice_mean = df['price'].mean()\nprice_std = df['price'].std()\ndf['price_zscore'] = (df['price'] - price_mean) / (price_std + 1e-8)\n\n# Feature 2: Price per product_id magnitude (price relative to product scale)\n# Products with higher IDs might be newer/different category price sensitivity\ndf['price_per_log_product'] = df['price'] / (np.log1p(df['product_id']) + 1e-8)\n\n# Feature 3: User-price interaction ratio\n# Captures relative purchasing power / affinity signal\n# Higher user_id with lower price may indicate different behavior\nuser_id_norm = (df['user_id'] - df['user_id'].mean()) / (df['user_id'].std() + 1e-8)\ndf['user_price_ratio'] = user_id_norm / (np.log1p(df['price']) + 1e-8)\n\n# Feature 4: Category deviation signal\n# How far the category_id deviates from its mean (normalized)\ncat_mean = df['category_id'].mean()\ncat_std = df['category_id'].std()\ndf['category_deviation'] = np.abs(df['category_id'] - cat_mean) / (cat_std + 1e-8)\n\n# Feature 5: Price bucket interaction with log product\n# Discretize price into quantile buckets then interact with log product_id\n# Captures non-linear price tiers effect\ndf['price_quantile'] = pd.qcut(df['price'], q=10, labels=False, duplicates='drop')\ndf['price_bucket_x_log_product'] = df['price_quantile'].astype(float) * np.log1p(df['product_id'])\n",
+  "ai_code": "\n# Feature 1: Price relative to its own distribution (price z-score approximation using precomputed stats)\nprice_mean = 294.708\nprice_std = 351.271\ndf['price_zscore'] = (df['price'] - price_mean) / (price_std + 1e-9)\n\n# Feature 2: Price bucket/bin - non-linear price segmentation\n# Low (<50), budget (50-150), mid (150-500), premium (500-1000), luxury (>1000)\ndf['price_tier'] = pd.cut(\n    df['price'],\n    bins=[0, 50, 150, 500, 1000, np.inf],\n    labels=[0, 1, 2, 3, 4],\n    right=True\n).astype(float)\n\n# Feature 3: Log of price (price is heavily skewed, log transform often helps)\ndf['log_price'] = np.log1p(df['price'])\n\n# Feature 4: User-relative product affinity proxy\n# user_id modulo a small prime to create pseudo-user segments (captures user behavioral clusters)\ndf['user_segment'] = df['user_id'] % 101  # 101 segments\n\n# Feature 5: Product ID relative to category scale\n# Captures whether a product is \"early\" or \"late\" within a product namespace,\n# which can correlate with product age/popularity\ndf['product_id_log_ratio_user'] = np.log1p(df['product_id']) / (np.log1p(df['user_id']) + 1e-9)\n\n# Feature 6: Price times log_product_id - interaction between price and product scale\ndf['price_x_log_product'] = df['price'] * np.log1p(df['product_id'])\n\n# Feature 7: Squared log price - captures non-linear price effects\ndf['sq_log_price'] = np.log1p(df['price']) ** 2\n",
   "ai_success": true
 }
